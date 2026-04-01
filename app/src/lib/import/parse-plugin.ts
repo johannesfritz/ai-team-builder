@@ -94,11 +94,14 @@ export function parsePluginFiles(files: ImportFile[]): ImportResult {
   const commandFiles = files.filter(f => f.path.startsWith('commands/') && f.path.endsWith('.md'));
   for (const file of commandFiles) {
     const name = file.path.replace('commands/', '').replace('.md', '');
+    // Extract description from first non-heading paragraph
+    const descMatch = file.content.match(/^(?:#[^\n]+\n+)?([^\n#][^\n]{10,})/);
+    const description = descMatch ? descMatch[1].substring(0, 100) : '';
     nodes.push({
       id: nextId('command'),
       type: 'command',
       position: { x: commandX, y: yOffset },
-      data: { label: `/${name}`, name, description: '', prompt: file.content },
+      data: { label: `/${name}`, name, description, prompt: file.content },
     });
     yOffset += 150;
   }
@@ -107,13 +110,23 @@ export function parsePluginFiles(files: ImportFile[]): ImportResult {
   const agentFiles = files.filter(f => f.path.startsWith('agents/') && f.path.endsWith('.md'));
   for (const file of agentFiles) {
     const name = file.path.replace('agents/', '').replace('.md', '');
+
+    // Try structured format first, fall back to treating entire content as system prompt
     const modelMatch = file.content.match(/\*\*Model:\*\*\s*(\S+)/);
     const toolsMatch = file.content.match(/## Allowed Tools\n((?:- .+\n?)+)/);
     const promptMatch = file.content.match(/## System Prompt\n\n([\s\S]*?)(?=\n## |$)/);
 
+    // Also try frontmatter format (model: sonnet, tools: Read, Grep)
+    const { frontmatter, body } = parseFrontmatter(file.content);
+    const fmModel = frontmatter.model;
+    const fmTools = frontmatter.tools;
+
     const tools = toolsMatch
       ? toolsMatch[1].split('\n').filter(l => l.startsWith('- ')).map(l => l.replace('- ', '').trim())
-      : [];
+      : fmTools ? fmTools.split(',').map(t => t.trim()) : [];
+
+    // Use structured system prompt if found, otherwise use the full body content
+    const systemPrompt = promptMatch?.[1]?.trim() || body || file.content.replace(/^# .+\n/, '').trim();
 
     nodes.push({
       id: nextId('agent'),
@@ -122,8 +135,8 @@ export function parsePluginFiles(files: ImportFile[]): ImportResult {
       data: {
         label: name,
         name,
-        model: modelMatch?.[1] || 'sonnet',
-        systemPrompt: promptMatch?.[1]?.trim() || '',
+        model: modelMatch?.[1] || fmModel || 'inherit',
+        systemPrompt,
         allowedTools: tools,
       },
     });

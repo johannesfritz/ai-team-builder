@@ -65,7 +65,7 @@ function getNodeName(node: Node): string {
 }
 
 export function TeamSetupView() {
-  const { nodes, selectedNodeId, setSelectedNodeId, meta } = useBuilderStore();
+  const { nodes, selectedNodeId, setSelectedNodeId, meta, setMeta } = useBuilderStore();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createDialogType, setCreateDialogType] = useState<PluginNodeType | undefined>(undefined);
 
@@ -87,15 +87,23 @@ export function TeamSetupView() {
       {/* Team Overview */}
       <Card className="bg-zinc-900 border-zinc-800 p-5 mb-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-zinc-200">
-              {meta.name || 'Untitled Plugin'}
-            </h2>
-            {meta.description && (
-              <p className="text-sm text-zinc-500 mt-1 max-w-xl">{meta.description}</p>
-            )}
+          <div className="flex-1 min-w-0">
+            <input
+              type="text"
+              value={meta.name || ''}
+              onChange={e => setMeta({ name: e.target.value })}
+              placeholder="Name your plugin..."
+              className="text-lg font-bold text-zinc-200 bg-transparent border-none outline-none w-full placeholder:text-zinc-600 hover:bg-zinc-800/50 focus:bg-zinc-800 rounded px-1 -ml-1 transition-colors"
+            />
+            <input
+              type="text"
+              value={meta.description || ''}
+              onChange={e => setMeta({ description: e.target.value })}
+              placeholder="Add a description..."
+              className="text-sm text-zinc-500 bg-transparent border-none outline-none w-full mt-1 placeholder:text-zinc-700 hover:bg-zinc-800/50 focus:bg-zinc-800 rounded px-1 -ml-1 transition-colors"
+            />
           </div>
-          <div className="text-right">
+          <div className="text-right ml-4 shrink-0">
             <div className="text-2xl font-bold text-zinc-200">{totalNodes}</div>
             <div className="text-xs text-zinc-500">components</div>
           </div>

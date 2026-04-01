@@ -141,6 +141,35 @@ export function deriveWorkflow(
 
   // Phase 4: Entry — The command itself
   const cd = commandNode.data as unknown as CommandData;
+
+  // For commands with structured prompts (markdown headings), extract phases as pseudo-steps
+  // This makes imported commands (with no edges) show their internal workflow
+  if (cd.prompt && connectedIds.size <= 1) {
+    const headings = cd.prompt.match(/^##\s+(.+)/gm);
+    if (headings && headings.length >= 2) {
+      for (const heading of headings) {
+        const phaseName = heading.replace(/^##\s+/, '').trim();
+        // Extract content between this heading and the next
+        const headingIdx = cd.prompt.indexOf(heading);
+        const nextHeadingMatch = cd.prompt.substring(headingIdx + heading.length).match(/\n##\s/);
+        const sectionEnd = nextHeadingMatch
+          ? headingIdx + heading.length + nextHeadingMatch.index!
+          : cd.prompt.length;
+        const sectionContent = cd.prompt.substring(headingIdx + heading.length, sectionEnd).trim();
+        const firstLine = sectionContent.split('\n')[0]?.trim() || '';
+
+        steps.push({
+          nodeId: commandNodeId,
+          nodeType: 'command',
+          name: phaseName,
+          description: firstLine.substring(0, 100),
+          tokenEstimate: estimateTokens(sectionContent),
+          phase: 'execute',
+        });
+      }
+    }
+  }
+
   steps.push({
     nodeId: commandNodeId,
     nodeType: 'command',
