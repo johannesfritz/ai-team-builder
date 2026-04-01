@@ -22,6 +22,17 @@ KNOWN_REPOS = {
     },
 }
 
+# Plugins served from JSON bundles (for private repos)
+BUNDLE_PLUGINS = {
+    "iran-monitor": {
+        "bundle_path": "/var/www/ai-team-builder-data/iran-monitor-plugin.json",
+        "title": "Iran Conflict Monitor",
+        "description": "9-phase monitoring cycle: parallel region search, source verification, GTA taxonomy mapping, deduplication, Slack notifications, and Excel export. Demonstrates multi-agent orchestration with 7 parallel searchers.",
+        "category": "Monitoring",
+        "version": "1.0.0",
+    },
+}
+
 
 def pull_repos():
     """Pull latest for all known repos on startup."""
@@ -80,6 +91,43 @@ def read_plugin(repo_name: str) -> dict:
     }
 
 
+def read_bundle_plugin(name: str) -> dict:
+    """Read a plugin from a JSON bundle file."""
+    info = BUNDLE_PLUGINS.get(name, {})
+    bundle_path = info.get("bundle_path", "")
+
+    if not os.path.exists(bundle_path):
+        return {"error": f"Bundle {name} not found"}
+
+    with open(bundle_path) as f:
+        files = json.load(f)
+
+    return {
+        "name": name,
+        "title": info.get("title", name),
+        "description": info.get("description", ""),
+        "category": info.get("category", "General"),
+        "version": info.get("version", "1.0.0"),
+        "manifest": {},
+        "files": files,
+        "file_count": len(files),
+    }
+
+
+def get_all_plugin_names() -> list:
+    """Get all plugin names from repos and bundles."""
+    return list(KNOWN_REPOS.keys()) + list(BUNDLE_PLUGINS.keys())
+
+
+def get_plugin(name: str) -> dict:
+    """Get plugin data from either repo or bundle."""
+    if name in KNOWN_REPOS:
+        return read_plugin(name)
+    elif name in BUNDLE_PLUGINS:
+        return read_bundle_plugin(name)
+    return {"error": f"Plugin {name} not found"}
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -90,8 +138,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/plugins":
             # List all available plugins
             plugins = []
-            for name in KNOWN_REPOS:
-                data = read_plugin(name)
+            for name in get_all_plugin_names():
+                data = get_plugin(name)
                 plugins.append({
                     "name": data["name"],
                     "title": data["title"],
@@ -103,8 +151,8 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(plugins).encode())
 
         elif self.path.startswith("/api/plugins/"):
-            repo_name = self.path.split("/api/plugins/")[1].strip("/")
-            data = read_plugin(repo_name)
+            plugin_name = self.path.split("/api/plugins/")[1].strip("/")
+            data = get_plugin(plugin_name)
             self.wfile.write(json.dumps(data).encode())
 
         elif self.path == "/api/health":
