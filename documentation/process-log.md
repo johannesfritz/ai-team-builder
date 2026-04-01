@@ -7,7 +7,7 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**LIVE at https://jfritz.xyz/ai-team-builder/**. Full plan WS-A through WS-D deployed. Team Setup panel view, Workflow timeline with command selector, validation engine, guidance + help tooltips in PropertyPanel. Remaining: guided creation dialogs, E2E tests, polish.
+**LIVE at https://jfritz.xyz/ai-team-builder/**. UAT complete (20 friction points found). P0 + P1 fixes deployed: guided creation wizard, edge-based workflow derivation, localStorage persistence, tools checklist, command selector fix. Remaining: expandable markdown editor (F4), delete confirmation (F18), export file tree view (F14), E2E tests.
 
 ## Log
 
