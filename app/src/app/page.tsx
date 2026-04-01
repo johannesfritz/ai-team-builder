@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Footer } from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { TEMPLATES } from "@/lib/templates";
 
@@ -124,6 +125,8 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
