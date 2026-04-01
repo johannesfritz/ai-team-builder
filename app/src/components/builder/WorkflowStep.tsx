@@ -34,6 +34,8 @@ export function WorkflowStepCard({ step, index, isLast, isSelected, onClick, dra
         className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
           isSelected
             ? 'bg-zinc-800 border-zinc-600'
+            : step.isGlobal
+            ? 'bg-zinc-950 border-zinc-800/50 hover:border-zinc-700 opacity-60'
             : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
         }`}
         onClick={onClick}

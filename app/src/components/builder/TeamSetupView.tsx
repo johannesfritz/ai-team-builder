@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useBuilderStore } from '@/stores/builder-store';
 import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-types';
 import { getNodeHealth, type NodeHealth } from '@/lib/validation';
+import { CreateNodeDialog } from './CreateNodeDialog';
 import type { RuleData, HookData, SkillData, CommandData, AgentData, McpData } from '@/lib/plugin-types';
 import type { Node } from '@xyflow/react';
 
@@ -64,7 +65,9 @@ function getNodeName(node: Node): string {
 }
 
 export function TeamSetupView() {
-  const { nodes, selectedNodeId, setSelectedNodeId, addNode, meta } = useBuilderStore();
+  const { nodes, selectedNodeId, setSelectedNodeId, meta } = useBuilderStore();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createDialogType, setCreateDialogType] = useState<PluginNodeType | undefined>(undefined);
 
   const grouped = useMemo(() => {
     const groups: Record<PluginNodeType, Node[]> = {
@@ -136,7 +139,7 @@ export function TeamSetupView() {
                 size="sm"
                 className="text-xs h-6 px-2"
                 style={{ color: NODE_COLORS[type] }}
-                onClick={() => addNode(type)}
+                onClick={() => { setCreateDialogType(type); setCreateDialogOpen(true); }}
               >
                 + Add
               </Button>
@@ -192,9 +195,15 @@ export function TeamSetupView() {
       {totalNodes === 0 && (
         <div className="text-center py-16 text-zinc-600">
           <div className="text-lg mb-2">No components yet</div>
-          <div className="text-sm">Add agents, skills, commands, and rules using the toolbar.</div>
+          <div className="text-sm">Add agents, skills, commands, and rules using the toolbar or the buttons above.</div>
         </div>
       )}
+
+      <CreateNodeDialog
+        open={createDialogOpen}
+        onClose={() => { setCreateDialogOpen(false); setCreateDialogType(undefined); }}
+        presetType={createDialogType}
+      />
     </div>
   );
 }

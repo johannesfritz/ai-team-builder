@@ -8,6 +8,7 @@ import { useBuilderStore } from '@/stores/builder-store';
 import { serializeGraph } from '@/lib/export/serialize';
 import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-types';
 import { ImportDialog } from './ImportDialog';
+import { CreateNodeDialog } from './CreateNodeDialog';
 
 const NODE_TYPES: PluginNodeType[] = ['rule', 'hook', 'skill', 'command', 'agent', 'mcp'];
 
@@ -15,6 +16,8 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
   const { nodes, edges, addNode, meta, undo, redo, historyIndex, history } = useBuilderStore();
   const [showExport, setShowExport] = useState(false);
   const [exportOutput, setExportOutput] = useState('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createDialogType, setCreateDialogType] = useState<PluginNodeType | undefined>(undefined);
 
   const handleExport = () => {
     const result = serializeGraph(nodes, edges, meta.name || 'my-plugin', '1.0.0', meta.description);
@@ -52,7 +55,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
               color: NODE_COLORS[type],
               background: NODE_COLORS[type] + '10',
             }}
-            onClick={() => addNode(type)}
+            onClick={() => { setCreateDialogType(type); setCreateDialogOpen(true); }}
           >
             + {NODE_LABELS[type]}
           </Button>
@@ -133,6 +136,12 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
           </div>
         </div>
       )}
+
+      <CreateNodeDialog
+        open={createDialogOpen}
+        onClose={() => { setCreateDialogOpen(false); setCreateDialogType(undefined); }}
+        presetType={createDialogType}
+      />
     </>
   );
 }
