@@ -107,35 +107,80 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
       </div>
 
       {/* Export modal */}
-      {showExport && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-8">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-              <h3 className="text-sm font-bold text-zinc-200">Export Preview</h3>
-              <div className="flex gap-2">
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" onClick={() => {
-                  const result = serializeGraph(nodes, edges, meta.name || 'my-plugin', '1.0.0', meta.description);
-                  const blob = new Blob([JSON.stringify({ files: result.files }, null, 2)], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `${meta.name || 'plugin'}-export.json`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}>
-                  Download JSON
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowExport(false)} className="text-zinc-500 h-7 w-7 p-0">
-                  x
+      {showExport && (() => {
+        const result = serializeGraph(nodes, edges, meta.name || 'my-plugin', '1.0.0', meta.description);
+        const pluginSlug = (meta.name || 'my-plugin').toLowerCase().replace(/\s+/g, '-');
+        return (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-8">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-2xl w-full max-h-[85vh] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+                <h3 className="text-sm font-bold text-zinc-200">Export Plugin</h3>
+                <Button variant="ghost" size="sm" onClick={() => setShowExport(false)} className="text-zinc-500 h-7 w-7 p-0">x</Button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 p-4 space-y-4">
+                {result.errors.length > 0 && (
+                  <div className="p-3 bg-red-950 border border-red-800 rounded-lg">
+                    <div className="text-xs font-semibold text-red-400 mb-1">Errors ({result.errors.length})</div>
+                    {result.errors.map((e, i) => <div key={i} className="text-[11px] text-red-300">{e}</div>)}
+                  </div>
+                )}
+
+                <div className="text-xs text-zinc-400">
+                  {result.files.length} files · ~{result.tokenEstimate} tokens
+                </div>
+
+                {/* File tree */}
+                <div className="space-y-1">
+                  {result.files.map(file => (
+                    <details key={file.path} className="group">
+                      <summary className="cursor-pointer text-xs font-mono text-zinc-400 hover:text-zinc-200 py-1.5 px-3 bg-zinc-950 rounded border border-zinc-800 group-open:border-emerald-800 group-open:bg-zinc-900">
+                        .claude-plugin/{file.path}
+                      </summary>
+                      <pre className="mt-1 p-3 bg-zinc-950 border border-zinc-800 rounded text-[11px] font-mono text-emerald-300 overflow-x-auto max-h-[200px] whitespace-pre-wrap leading-relaxed">
+                        {file.content}
+                      </pre>
+                    </details>
+                  ))}
+                </div>
+
+                {/* Install instructions */}
+                <div className="p-3 bg-zinc-800 rounded-lg space-y-2">
+                  <div className="text-xs font-semibold text-zinc-300">How to install</div>
+                  <div className="text-[11px] text-zinc-400 space-y-1.5">
+                    <div>1. Download the JSON file below</div>
+                    <div>2. In your project, create the <code className="bg-zinc-700 px-1 rounded">.claude-plugin/</code> directory</div>
+                    <div>3. Extract the files from the JSON into that directory</div>
+                    <div>4. Or, if published to GitHub:</div>
+                    <div className="pl-4">
+                      <code className="bg-zinc-700 px-2 py-1 rounded text-emerald-300 text-[10px]">
+                        claude plugin add your-username/{pluginSlug}
+                      </code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-zinc-800">
+                <Button
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                  onClick={() => {
+                    const blob = new Blob([JSON.stringify({ files: result.files }, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${pluginSlug}-plugin.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Download {pluginSlug}-plugin.json
                 </Button>
               </div>
             </div>
-            <pre className="p-4 overflow-auto flex-1 text-[11px] font-mono text-emerald-300 leading-relaxed whitespace-pre-wrap">
-              {exportOutput}
-            </pre>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <CreateNodeDialog
         open={createDialogOpen}

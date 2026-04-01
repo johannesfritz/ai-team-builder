@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useBuilderStore } from '@/stores/builder-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,9 +71,7 @@ export function PropertyPanel() {
 
         <Separator className="bg-zinc-800" />
 
-        <Button variant="destructive" size="sm" className="w-full" onClick={() => deleteNode(node.id)}>
-          Delete Component
-        </Button>
+        <DeleteButton nodeId={node.id} nodeName={(data.name as string) || (data.label as string) || NODE_LABELS[type]} onDelete={deleteNode} />
       </div>
     </div>
   );
@@ -248,5 +246,31 @@ function McpFields({ data, update, type }: { data: Record<string, unknown>; upda
         />
       </GuidedField>
     </>
+  );
+}
+
+function DeleteButton({ nodeId, nodeName, onDelete }: { nodeId: string; nodeName: string; onDelete: (id: string) => void }) {
+  const [confirming, setConfirming] = useState(false);
+
+  if (confirming) {
+    return (
+      <div className="space-y-2">
+        <div className="text-xs text-zinc-400 text-center">Delete &quot;{nodeName}&quot;? This cannot be undone.</div>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" className="flex-1 text-zinc-400" onClick={() => setConfirming(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" size="sm" className="flex-1" onClick={() => { onDelete(nodeId); setConfirming(false); }}>
+            Delete
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Button variant="ghost" size="sm" className="w-full text-red-400 hover:text-red-300 hover:bg-red-950" onClick={() => setConfirming(true)}>
+      Delete Component
+    </Button>
   );
 }
