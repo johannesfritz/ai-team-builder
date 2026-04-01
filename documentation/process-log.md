@@ -7,7 +7,7 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-WS0-WS2 done. WS3 ~50% (export code written, needs UI). WS4 done (dry run). Renamed to AI Team Builder. Static export configured. GitHub repo created. Next: wire export UI, add templates, deploy to jfritz.xyz.
+**LIVE at https://jfritz.xyz/ai-team-builder/**. WS0-WS4+WS6 done. Landing page with 5 templates, builder canvas, dry run, export. Remaining: testing (WS7), import from `.claude/`, AI assist (WS5).
 
 ## Log
 
@@ -131,3 +131,24 @@ WS0-WS2 done. WS3 ~50% (export code written, needs UI). WS4 done (dry run). Rena
   - Considered Vue/Nuxt switch (bos stack) — decided to stay with React. BotCamp is standalone, React Flow is proven, switching costs 1-1.5 days for zero functional gain.
 - **Status:** WS2 ~85% (dry run done, import still missing), WS3 ~50% (GitHub API code written, needs UI integration), WS4-WS7 not started
 - **Next:** Wire GitHub export into toolbar UI, add template gallery, then testing
+
+### 2026-04-01 — Rename, templates, deploy LIVE
+
+- **Attempted:** Renamed to AI Team Builder, added templates, configured static export, deployed to jfritz.xyz
+- **Produced:**
+  - Renamed project from BotCamp → AI Team Builder (all brand references updated)
+  - `src/lib/templates.ts` — 5 starter templates (Code Review, Git Discipline, Agent Pipeline, Security Scanner, API Integration)
+  - Landing page with template gallery (category badges, node counts)
+  - Template loading via `?template=` URL parameter
+  - `next.config.ts` — static export with `basePath: "/ai-team-builder"`
+  - Nginx config on jfritz.xyz for `/ai-team-builder/` with `try_files $uri $uri.html`
+  - Download JSON button in export modal
+  - GitHub repo created: github.com/johannesfritz/ai-team-builder
+  - Two commits pushed (initial + templates/deploy)
+- **Deployed:** https://jfritz.xyz/ai-team-builder/ — LIVE and verified
+- **Status:** WS0-WS4+WS6 DONE. Landing page, builder, dry run, templates, export all working in production.
+- **Remaining:**
+  - WS5: AI assist (natural language → components) + import from `.claude/`
+  - WS7: Testing (Playwright E2E, unit tests)
+  - Polish: loading states, error boundaries, responsive
+- **Next:** WS7 testing against production URL, then WS5 AI assist
