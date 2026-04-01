@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TeamSetupView } from '@/components/builder/TeamSetupView';
-import { BuilderCanvas } from '@/components/builder/Canvas';
+import { WorkflowView } from '@/components/builder/WorkflowView';
 import { PropertyPanel } from '@/components/builder/PropertyPanel';
 import { DryRunPanel } from '@/components/builder/DryRun';
 import { Toolbar } from '@/components/builder/Toolbar';
@@ -68,7 +68,7 @@ function BuilderWithParams() {
           {mainView === 'setup' ? (
             <TeamSetupView />
           ) : (
-            <BuilderCanvas />
+            <WorkflowView />
           )}
         </div>
       </div>
