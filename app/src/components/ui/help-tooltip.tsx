@@ -22,10 +22,11 @@ export function HelpTooltip({ text, example }: HelpTooltipProps) {
         ?
       </button>
       {open && (
-        <div className="absolute z-50 left-0 top-6 w-64 p-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl text-xs text-zinc-300 leading-relaxed">
+        <div className="absolute z-50 right-0 top-6 w-64 p-3 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl text-xs text-zinc-300 leading-relaxed"
+             style={{ maxWidth: 'calc(100vw - 32px)' }}>
           <div>{text}</div>
           {example && (
-            <div className="mt-2 p-1.5 bg-zinc-900 rounded font-mono text-[10px] text-emerald-300">
+            <div className="mt-2 p-1.5 bg-zinc-900 rounded font-mono text-[10px] text-emerald-300 break-all">
               {example}
             </div>
           )}

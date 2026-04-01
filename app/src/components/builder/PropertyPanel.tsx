@@ -118,7 +118,7 @@ function RuleFields({ data, update, type }: { data: Record<string, unknown>; upd
         <Input value={(data.pathFilter as string) || ''} onChange={e => update('pathFilter', e.target.value)} placeholder="e.g. **/*.py" className="bg-zinc-900 border-zinc-700 font-mono text-xs" />
       </GuidedField>
       <GuidedField fieldKey="content" label="Content" type={type} data={data}>
-        <Textarea value={(data.content as string) || ''} onChange={e => update('content', e.target.value)} placeholder="# Rule content..." rows={10} className="bg-zinc-900 border-zinc-700 font-mono text-xs" />
+        <Textarea value={(data.content as string) || ''} onChange={e => update('content', e.target.value)} placeholder="# Rule content..." rows={12} className="bg-zinc-900 border-zinc-700 font-mono text-xs min-h-[200px] resize-y" />
       </GuidedField>
     </>
   );
@@ -214,14 +214,12 @@ function AgentFields({ data, update, type }: { data: Record<string, unknown>; up
         </Select>
       </GuidedField>
       <GuidedField fieldKey="systemPrompt" label="System Prompt" type={type} data={data}>
-        <Textarea value={(data.systemPrompt as string) || ''} onChange={e => update('systemPrompt', e.target.value)} rows={8} placeholder="Describe this agent's role, constraints, and approach..." className="bg-zinc-900 border-zinc-700 font-mono text-xs" />
+        <Textarea value={(data.systemPrompt as string) || ''} onChange={e => update('systemPrompt', e.target.value)} rows={12} placeholder="Describe this agent's role, constraints, and approach..." className="bg-zinc-900 border-zinc-700 font-mono text-xs min-h-[200px] resize-y" />
       </GuidedField>
       <GuidedField fieldKey="allowedTools" label="Allowed Tools" type={type} data={data}>
-        <Input
-          value={Array.isArray(data.allowedTools) ? (data.allowedTools as string[]).join(', ') : ''}
-          onChange={e => update('allowedTools', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
-          placeholder="Read, Grep, Glob, Bash, Edit, Write"
-          className="bg-zinc-900 border-zinc-700 font-mono text-xs"
+        <ToolChips
+          selected={Array.isArray(data.allowedTools) ? (data.allowedTools as string[]) : []}
+          onChange={tools => update('allowedTools', tools)}
         />
       </GuidedField>
     </>
@@ -272,5 +270,31 @@ function DeleteButton({ nodeId, nodeName, onDelete }: { nodeId: string; nodeName
     <Button variant="ghost" size="sm" className="w-full text-red-400 hover:text-red-300 hover:bg-red-950" onClick={() => setConfirming(true)}>
       Delete Component
     </Button>
+  );
+}
+
+const TOOL_OPTIONS = ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'Glob', 'WebSearch', 'WebFetch', 'Agent'];
+
+function ToolChips({ selected, onChange }: { selected: string[]; onChange: (tools: string[]) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {TOOL_OPTIONS.map(tool => {
+        const isSelected = selected.includes(tool);
+        return (
+          <button
+            key={tool}
+            type="button"
+            className={`px-2 py-1 rounded text-[10px] font-mono border transition-colors ${
+              isSelected
+                ? 'bg-emerald-900 border-emerald-600 text-emerald-300'
+                : 'bg-zinc-900 border-zinc-700 text-zinc-500 hover:border-zinc-500'
+            }`}
+            onClick={() => onChange(isSelected ? selected.filter(t => t !== tool) : [...selected, tool])}
+          >
+            {tool}
+          </button>
+        );
+      })}
+    </div>
   );
 }
