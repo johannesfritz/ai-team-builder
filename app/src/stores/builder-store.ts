@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import {
   type Node,
   type Edge,
@@ -57,11 +58,11 @@ const NODE_DEFAULTS: Record<PluginNodeType, Record<string, unknown>> = {
   hook: { label: 'New Hook', event: 'PreToolUse', matcher: '', action: '', once: false },
   skill: { label: 'New Skill', name: '', description: '', instructions: '', filePattern: '', bashPattern: '' },
   command: { label: 'New Command', name: '', description: '', prompt: '' },
-  agent: { label: 'New Agent', name: '', model: 'sonnet', systemPrompt: '', allowedTools: [] },
+  agent: { label: 'New Agent', name: '', model: 'inherit', systemPrompt: '', allowedTools: [] },
   mcp: { label: 'New MCP', serverName: '', command: 'node', args: [], env: {} },
 };
 
-export const useBuilderStore = create<BuilderState>((set, get) => ({
+export const useBuilderStore = create<BuilderState>()(persist((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
@@ -171,4 +172,13 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     if (!sourceNode || !targetNode) return false;
     return VALID_CONNECTIONS[sourceNode.type as PluginNodeType]?.includes(targetNode.type as PluginNodeType) ?? false;
   },
-}));
+}),
+  {
+    name: 'ai-team-builder',
+    partialize: (state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      meta: state.meta,
+    }),
+  },
+));

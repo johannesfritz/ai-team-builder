@@ -1,6 +1,5 @@
 "use client";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useBuilderStore } from '@/stores/builder-store';
 import { getCommandNodes } from '@/lib/workflow/derive';
@@ -26,21 +25,22 @@ export function WorkflowCommandSelector({ selectedCommandId, onSelect, onCreateN
     );
   }
 
+  const selectedName = commands.find(c => c.id === selectedCommandId)?.name;
+
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs text-zinc-400">Workflow for:</span>
-      <Select value={selectedCommandId || ''} onValueChange={(v) => { if (v) onSelect(v); }}>
-        <SelectTrigger className="w-[200px] h-8 bg-zinc-900 border-zinc-700 text-xs">
-          <SelectValue placeholder="Select a command..." />
-        </SelectTrigger>
-        <SelectContent>
-          {commands.map(cmd => (
-            <SelectItem key={cmd.id} value={cmd.id} className="text-xs">
-              /{cmd.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <select
+        value={selectedCommandId || ''}
+        onChange={e => onSelect(e.target.value)}
+        className="h-8 px-3 bg-zinc-900 border border-zinc-700 rounded-md text-xs text-zinc-200 outline-none focus:border-emerald-500 min-w-[180px]"
+      >
+        {commands.map(cmd => (
+          <option key={cmd.id} value={cmd.id}>
+            /{cmd.name || 'untitled'}
+          </option>
+        ))}
+      </select>
       <Button size="sm" variant="ghost" className="text-xs h-7 text-purple-400" onClick={onCreateNew}>
         + New
       </Button>
