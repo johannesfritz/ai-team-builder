@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,10 +26,17 @@ export function CreateNodeDialog({ open, onClose, presetType }: CreateNodeDialog
   const [selectedType, setSelectedType] = useState<PluginNodeType | null>(presetType || null);
   const [fields, setFields] = useState<Record<string, unknown>>({});
   const [connectTo, setConnectTo] = useState<string>('');
-  const { nodes, edges, addNode, updateNodeData } = useBuilderStore();
+  const { nodes, addNode } = useBuilderStore();
   const store = useBuilderStore();
 
   const commands = getCommandNodes(nodes);
+
+  // Auto-advance to fields if type is preset
+  useEffect(() => {
+    if (open && presetType && step === 'type') {
+      handleSelectType(presetType);
+    }
+  }, [open, presetType]);
 
   const resetAndClose = () => {
     setStep('type');
@@ -64,33 +71,17 @@ export function CreateNodeDialog({ open, onClose, presetType }: CreateNodeDialog
       ? name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
       : `New ${NODE_LABELS[selectedType]}`;
 
-    // Create the node
-    addNode(selectedType);
+    // Create the node with all data in one call
+    const newNodeId = addNode(selectedType, { ...fields, label });
 
-    // Find the just-created node (last one of this type)
-    const allOfType = store.nodes.filter(n => n.type === selectedType);
-    const newNode = allOfType[allOfType.length - 1];
-
-    if (newNode) {
-      updateNodeData(newNode.id, { ...fields, label });
-
-      // Create edge to selected command if applicable
-      if (connectTo && selectedType !== 'command') {
-        const edgeType = selectedType === 'rule' || selectedType === 'skill' ? 'hook' :
-                         selectedType === 'agent' ? 'agent' : selectedType;
-
-        // For skills: create skill → command edge
-        if (selectedType === 'skill') {
-          store.onConnect({
-            source: newNode.id,
-            target: connectTo,
-            sourceHandle: null,
-            targetHandle: null,
-          });
-        }
-        // For hooks: the hook is the source, connect to the new node's target (if a rule)
-        // For agents: agent → skill (but we need a skill, not a command)
+    // Create edge to selected command if applicable
+    if (connectTo && newNodeId && selectedType !== 'command') {
+      // For skills: skill → command edge
+      if (selectedType === 'skill') {
+        store.onConnect({ source: newNodeId, target: connectTo, sourceHandle: null, targetHandle: null });
       }
+      // For hooks: hook connects to rules/skills (not directly to commands)
+      // For agents: agent → skill (user wires this manually or we can auto-connect)
     }
 
     resetAndClose();

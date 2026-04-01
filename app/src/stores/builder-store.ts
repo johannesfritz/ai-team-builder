@@ -37,7 +37,7 @@ interface BuilderState {
   setMeta: (meta: Partial<PluginMeta>) => void;
 
   // Node operations
-  addNode: (type: PluginNodeType) => void;
+  addNode: (type: PluginNodeType, initialData?: Record<string, unknown>) => string;
   updateNodeData: (id: string, data: Record<string, unknown>) => void;
   deleteNode: (id: string) => void;
 
@@ -104,7 +104,7 @@ export const useBuilderStore = create<BuilderState>()(persist((set, get) => ({
 
   setMeta: (partial) => set({ meta: { ...get().meta, ...partial } }),
 
-  addNode: (type) => {
+  addNode: (type, initialData) => {
     const id = `${type}-${Date.now()}`;
     const existingNodes = get().nodes;
     const maxY = existingNodes.length > 0
@@ -115,11 +115,12 @@ export const useBuilderStore = create<BuilderState>()(persist((set, get) => ({
       id,
       type,
       position: { x: 200, y: maxY },
-      data: { ...NODE_DEFAULTS[type] },
+      data: { ...NODE_DEFAULTS[type], ...initialData },
     };
 
     set({ nodes: [...existingNodes, newNode], selectedNodeId: id });
     get().pushHistory();
+    return id;
   },
 
   updateNodeData: (id, data) => {
