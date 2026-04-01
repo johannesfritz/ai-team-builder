@@ -7,7 +7,7 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**LIVE at https://jfritz.xyz/ai-team-builder/**. WS0-WS6 done (import added). UAT passing (all URLs 200, content verified). Remaining: AI assist (WS5, needs server), polish, E2E tests.
+**LIVE at https://jfritz.xyz/ai-team-builder/**. Major UX overhaul deployed: Team Setup panel view replaces canvas, validation engine, guidance system. Workflow tab preserves React Flow canvas. cc-data-science-team integrated as showcase. Remaining: WS-C (Workflow timeline), WS-D (help tooltips), guided creation dialogs, E2E tests.
 
 ## Log
 
