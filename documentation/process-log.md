@@ -152,3 +152,26 @@
   - WS7: Testing (Playwright E2E, unit tests)
   - Polish: loading states, error boundaries, responsive
 - **Next:** WS7 testing against production URL, then WS5 AI assist
+
+## Backlog
+
+### Priority 1: Workflow View
+- **Plan:** `documentation/workflow-view-plan.md`
+- **Summary:** Second view in the builder showing sequential execution flow of slash commands. Vertical timeline with step cards, per-command switching, drag reorder, edit warnings (amend vs create copy), and new workflow creation.
+- **Complexity:** Medium | **Effort:** 2-3 days | **Risk:** 4/10
+- **Key decision:** Derive workflows from graph edges (no separate storage). Display order is cosmetic; execution order is runtime-determined.
+- **Dependencies:** None beyond existing codebase. New dep: `@dnd-kit/core` + `@dnd-kit/sortable` (~15KB gzipped).
+- **Status:** Plan written, awaiting CEO approval.
+
+### Priority 2: WS5 — AI Assist
+- Import from existing `.claude/` directory (partially scoped)
+- Natural language to components (needs server/API — deferred)
+
+### Priority 3: WS7 — Testing
+- Playwright E2E against production URL
+- Unit tests for serializer, simulation engine, workflow derivation
+
+### Priority 4: Polish
+- Loading states, error boundaries
+- Responsive layout
+- Keyboard navigation
