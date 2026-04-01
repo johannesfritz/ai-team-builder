@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useBuilderStore } from '@/stores/builder-store';
 import { serializeGraph } from '@/lib/export/serialize';
 import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-types';
+import { ImportDialog } from './ImportDialog';
 
 const NODE_TYPES: PluginNodeType[] = ['rule', 'hook', 'skill', 'command', 'agent', 'mcp'];
 
@@ -67,6 +68,8 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
             Redo
           </Button>
         </div>
+
+        <ImportDialog />
 
         <Button
           size="sm"
