@@ -17,7 +17,7 @@ function BuilderWithParams() {
   const [mainView, setMainView] = useState<MainView>('setup');
   const [rightPanel, setRightPanel] = useState<RightPanel>('properties');
   const searchParams = useSearchParams();
-  const { loadGraph, setMeta } = useBuilderStore();
+  const { loadGraph, setMeta, undo, redo } = useBuilderStore();
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -32,6 +32,20 @@ function BuilderWithParams() {
     }
     setLoaded(true);
   }, [searchParams, loadGraph, setMeta, loaded]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'y') { e.preventDefault(); redo(); }
+      if (e.key === '1' && !e.metaKey && !e.ctrlKey) setMainView('setup');
+      if (e.key === '2' && !e.metaKey && !e.ctrlKey) setMainView('workflow');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [undo, redo]);
 
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-200">

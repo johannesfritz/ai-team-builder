@@ -201,9 +201,31 @@ export function TeamSetupView() {
       })}
 
       {totalNodes === 0 && (
-        <div className="text-center py-16 text-zinc-600">
-          <div className="text-lg mb-2">No components yet</div>
-          <div className="text-sm">Add agents, skills, commands, and rules using the toolbar or the buttons above.</div>
+        <div className="py-12 space-y-8">
+          <div className="text-center text-zinc-600">
+            <div className="text-lg mb-2">Build your agentic team</div>
+            <div className="text-sm max-w-md mx-auto">Start by defining what your team does. A typical plugin has a command (the entry point), agents (the workers), and rules (the standards).</div>
+          </div>
+          <div className="max-w-lg mx-auto space-y-3">
+            <div className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Recommended first steps</div>
+            {[
+              { type: 'command' as PluginNodeType, title: 'Create a slash command', desc: 'The entry point users invoke. Example: /review, /deploy, /write-report' },
+              { type: 'agent' as PluginNodeType, title: 'Add an agent', desc: 'A specialist worker with its own model and tools. Example: code-reviewer, researcher' },
+              { type: 'rule' as PluginNodeType, title: 'Define standards', desc: 'Rules that load automatically to guide the agent. Example: code-standards, writing-guidelines' },
+            ].map(item => (
+              <button
+                key={item.type}
+                className="w-full flex items-start gap-3 p-4 rounded-lg border border-zinc-800 hover:border-zinc-600 transition-colors text-left bg-zinc-900/50"
+                onClick={() => { setCreateDialogType(item.type); setCreateDialogOpen(true); }}
+              >
+                <span className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: NODE_COLORS[item.type] }} />
+                <div>
+                  <div className="text-sm font-medium text-zinc-300">{item.title}</div>
+                  <div className="text-xs text-zinc-600 mt-0.5">{item.desc}</div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

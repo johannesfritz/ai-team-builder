@@ -7,7 +7,7 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**LIVE at https://jfritz.xyz/ai-team-builder/**. All P0-P2 fixes deployed. First-time user test (op-ed writing workflow) passed end-to-end. Guided creation, validation, workflow view, structured export all working. Remaining: expandable markdown editor, plugin name editor in summary card.
+**LIVE at https://jfritz.xyz/ai-team-builder/**. Overnight sprint complete (JF-232 + JF-233 DONE). Plugin name editor, import parser fixes, workflow phase extraction, landing page upgrade, fullscreen editor, iran-monitor showcase, 4 new jf-dev commands + 1 rule. All pages 200 on production. Continuing with further improvements.
 
 ## Log
 
