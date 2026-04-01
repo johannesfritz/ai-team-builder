@@ -132,7 +132,51 @@ export default function ShowcasePage() {
               </Button>
             </div>
 
+            {/* README / CLAUDE.md preview */}
+            {selected.files.find(f => f.path === 'CLAUDE.md') && (
+              <details className="mb-6 group">
+                <summary className="cursor-pointer text-sm font-semibold text-zinc-300 hover:text-zinc-200 flex items-center gap-2">
+                  <span>Plugin Documentation</span>
+                  <span className="text-[10px] text-zinc-600 group-open:hidden">Click to expand</span>
+                </summary>
+                <pre className="mt-2 p-4 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] font-mono text-zinc-400 overflow-x-auto max-h-[400px] whitespace-pre-wrap leading-relaxed">
+                  {selected.files.find(f => f.path === 'CLAUDE.md')!.content}
+                </pre>
+              </details>
+            )}
+
+            {/* Component summary */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+              {selected.files
+                .filter(f => !f.path.startsWith('CLAUDE'))
+                .map(file => {
+                  const type = file.path.split('/')[0];
+                  const name = file.path.split('/').pop()?.replace('.md', '') || '';
+                  const colors: Record<string, string> = {
+                    commands: '#a855f7', agents: '#ef4444', rules: '#3b82f6',
+                    skills: '#22c55e', hooks: '#f97316', protocols: '#6b7280',
+                  };
+                  const color = colors[type] || '#6b7280';
+                  const firstLine = file.content.replace(/^#[^\n]+\n+/, '').split('\n')[0]?.substring(0, 80) || '';
+
+                  return (
+                    <Card key={file.path} className="bg-zinc-900 border-zinc-800 p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="text-[9px] h-4 px-1.5" style={{ background: color, color: '#fff' }}>
+                          {type.replace(/s$/, '')}
+                        </Badge>
+                        <span className="text-xs font-semibold text-zinc-200 truncate">
+                          {type === 'commands' ? `/${name}` : name}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-zinc-500 truncate">{firstLine}</div>
+                    </Card>
+                  );
+                })}
+            </div>
+
             {/* File browser */}
+            <h3 className="text-sm font-semibold text-zinc-300 mb-3">Source files</h3>
             <div className="space-y-4">
               {Object.entries(filesByType).map(([type, files]) => (
                 <div key={type}>
