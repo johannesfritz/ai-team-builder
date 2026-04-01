@@ -1,0 +1,15 @@
+[Unit]
+Description=AI Team Builder Plugin API
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /var/www/ai-team-builder-data/serve-plugin.py
+WorkingDirectory=/var/www/ai-team-builder-data
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

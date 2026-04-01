@@ -25,6 +25,11 @@ export default function Home() {
                 Start from Scratch
               </Button>
             </Link>
+            <Link href="/showcase">
+              <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300">
+                Showcase
+              </Button>
+            </Link>
           </div>
           <div className="pt-8 grid grid-cols-3 gap-6 text-left">
             <div className="space-y-2">
