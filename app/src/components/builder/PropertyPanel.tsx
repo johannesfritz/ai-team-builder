@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { FullscreenEditor } from './FullscreenEditor';
 import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-types';
 import { GUIDANCE } from '@/lib/guidance';
-import { validateNode, type FieldIssue } from '@/lib/validation';
+import { validateNode } from '@/lib/validation';
 
 export function PropertyPanel() {
   const { nodes, selectedNodeId, updateNodeData, deleteNode, setSelectedNodeId } = useBuilderStore();
@@ -108,6 +109,47 @@ function GuidedField({ fieldKey, label, type, data, children }: {
   );
 }
 
+function ExpandableText({ value, onChange, fieldKey, label, typeBadge, typeColor, placeholder, help }: {
+  value: string; onChange: (v: string) => void; fieldKey: string;
+  label: string; typeBadge?: string; typeColor?: string; placeholder?: string; help?: string;
+}) {
+  const [editorOpen, setEditorOpen] = useState(false);
+  const preview = value ? value.substring(0, 120).replace(/\n/g, ' ') + (value.length > 120 ? '...' : '') : '';
+  const lines = value ? value.split('\n').length : 0;
+
+  return (
+    <>
+      <div
+        className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 cursor-pointer hover:border-zinc-600 transition-colors group"
+        onClick={() => setEditorOpen(true)}
+      >
+        {value ? (
+          <>
+            <div className="text-xs font-mono text-zinc-400 leading-relaxed line-clamp-3">{preview}</div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-[10px] text-zinc-600">{lines} lines · ~{Math.ceil(value.length / 4)} tokens</span>
+              <span className="text-[10px] text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to expand</span>
+            </div>
+          </>
+        ) : (
+          <div className="text-xs text-zinc-600 italic">{placeholder || 'Click to write...'}</div>
+        )}
+      </div>
+      <FullscreenEditor
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        value={value}
+        onChange={onChange}
+        title={label}
+        typeBadge={typeBadge}
+        typeColor={typeColor}
+        placeholder={placeholder}
+        help={help}
+      />
+    </>
+  );
+}
+
 function RuleFields({ data, update, type }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType }) {
   return (
     <>
@@ -118,7 +160,14 @@ function RuleFields({ data, update, type }: { data: Record<string, unknown>; upd
         <Input value={(data.pathFilter as string) || ''} onChange={e => update('pathFilter', e.target.value)} placeholder="e.g. **/*.py" className="bg-zinc-900 border-zinc-700 font-mono text-xs" />
       </GuidedField>
       <GuidedField fieldKey="content" label="Content" type={type} data={data}>
-        <Textarea value={(data.content as string) || ''} onChange={e => update('content', e.target.value)} placeholder="# Rule content..." rows={12} className="bg-zinc-900 border-zinc-700 font-mono text-xs min-h-[200px] resize-y" />
+        <ExpandableText
+          value={(data.content as string) || ''}
+          onChange={v => update('content', v)}
+          fieldKey="content" label="Rule Content"
+          typeBadge="Rule" typeColor={NODE_COLORS.rule}
+          placeholder="# Rule content..."
+          help={GUIDANCE.rule.fields.content?.help}
+        />
       </GuidedField>
     </>
   );
@@ -174,7 +223,14 @@ function SkillFields({ data, update, type }: { data: Record<string, unknown>; up
         <Input value={(data.bashPattern as string) || ''} onChange={e => update('bashPattern', e.target.value)} placeholder="e.g. pytest|npm test" className="bg-zinc-900 border-zinc-700 font-mono text-xs" />
       </GuidedField>
       <GuidedField fieldKey="instructions" label="Instructions" type={type} data={data}>
-        <Textarea value={(data.instructions as string) || ''} onChange={e => update('instructions', e.target.value)} rows={10} placeholder="Step-by-step procedure for Claude to follow..." className="bg-zinc-900 border-zinc-700 font-mono text-xs" />
+        <ExpandableText
+          value={(data.instructions as string) || ''}
+          onChange={v => update('instructions', v)}
+          fieldKey="instructions" label="Skill Instructions"
+          typeBadge="Skill" typeColor={NODE_COLORS.skill}
+          placeholder="Step-by-step procedure for Claude to follow..."
+          help={GUIDANCE.skill.fields.instructions?.help}
+        />
       </GuidedField>
     </>
   );
@@ -190,7 +246,14 @@ function CommandFields({ data, update, type }: { data: Record<string, unknown>; 
         <Input value={(data.description as string) || ''} onChange={e => update('description', e.target.value)} placeholder="Brief description for command help" className="bg-zinc-900 border-zinc-700" />
       </GuidedField>
       <GuidedField fieldKey="prompt" label="Prompt Template" type={type} data={data}>
-        <Textarea value={(data.prompt as string) || ''} onChange={e => update('prompt', e.target.value)} rows={10} placeholder="Instructions Claude follows when user types /your-command..." className="bg-zinc-900 border-zinc-700 font-mono text-xs" />
+        <ExpandableText
+          value={(data.prompt as string) || ''}
+          onChange={v => update('prompt', v)}
+          fieldKey="prompt" label="Prompt Template"
+          typeBadge="Command" typeColor={NODE_COLORS.command}
+          placeholder="Instructions Claude follows when user types /your-command..."
+          help={GUIDANCE.command.fields.prompt?.help}
+        />
       </GuidedField>
     </>
   );
@@ -214,7 +277,14 @@ function AgentFields({ data, update, type }: { data: Record<string, unknown>; up
         </Select>
       </GuidedField>
       <GuidedField fieldKey="systemPrompt" label="System Prompt" type={type} data={data}>
-        <Textarea value={(data.systemPrompt as string) || ''} onChange={e => update('systemPrompt', e.target.value)} rows={12} placeholder="Describe this agent's role, constraints, and approach..." className="bg-zinc-900 border-zinc-700 font-mono text-xs min-h-[200px] resize-y" />
+        <ExpandableText
+          value={(data.systemPrompt as string) || ''}
+          onChange={v => update('systemPrompt', v)}
+          fieldKey="systemPrompt" label="System Prompt"
+          typeBadge="Agent" typeColor={NODE_COLORS.agent}
+          placeholder="Describe this agent's role, constraints, and approach..."
+          help={GUIDANCE.agent.fields.systemPrompt?.help}
+        />
       </GuidedField>
       <GuidedField fieldKey="allowedTools" label="Allowed Tools" type={type} data={data}>
         <ToolChips
