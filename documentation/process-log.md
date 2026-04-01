@@ -7,7 +7,7 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**LIVE at https://jfritz.xyz/ai-team-builder/**. Major UX overhaul deployed: Team Setup panel view replaces canvas, validation engine, guidance system. Workflow tab preserves React Flow canvas. cc-data-science-team integrated as showcase. Remaining: WS-C (Workflow timeline), WS-D (help tooltips), guided creation dialogs, E2E tests.
+**LIVE at https://jfritz.xyz/ai-team-builder/**. Full plan WS-A through WS-D deployed. Team Setup panel view, Workflow timeline with command selector, validation engine, guidance + help tooltips in PropertyPanel. Remaining: guided creation dialogs, E2E tests, polish.
 
 ## Log
 
