@@ -7,7 +7,7 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**LIVE at https://jfritz.xyz/ai-team-builder/**. WS0-WS4+WS6 done. Landing page with 5 templates, builder canvas, dry run, export. Remaining: testing (WS7), import from `.claude/`, AI assist (WS5).
+**LIVE at https://jfritz.xyz/ai-team-builder/**. WS0-WS6 done (import added). UAT passing (all URLs 200, content verified). Remaining: AI assist (WS5, needs server), polish, E2E tests.
 
 ## Log
 
