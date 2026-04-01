@@ -106,9 +106,23 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
           <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-zinc-800">
               <h3 className="text-sm font-bold text-zinc-200">Export Preview</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowExport(false)} className="text-zinc-500 h-6 w-6 p-0">
-                x
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" onClick={() => {
+                  const result = serializeGraph(nodes, edges, meta.name || 'my-plugin', '1.0.0', meta.description);
+                  const blob = new Blob([JSON.stringify({ files: result.files }, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${meta.name || 'plugin'}-export.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}>
+                  Download JSON
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowExport(false)} className="text-zinc-500 h-7 w-7 p-0">
+                  x
+                </Button>
+              </div>
             </div>
             <pre className="p-4 overflow-auto flex-1 text-[11px] font-mono text-emerald-300 leading-relaxed whitespace-pre-wrap">
               {exportOutput}

@@ -1,13 +1,32 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { BuilderCanvas } from '@/components/builder/Canvas';
 import { PropertyPanel } from '@/components/builder/PropertyPanel';
 import { DryRunPanel } from '@/components/builder/DryRun';
 import { Toolbar } from '@/components/builder/Toolbar';
+import { useBuilderStore } from '@/stores/builder-store';
+import { TEMPLATES } from '@/lib/templates';
 
-export default function BuilderPage() {
+function BuilderWithParams() {
   const [rightPanel, setRightPanel] = useState<'properties' | 'dryrun'>('properties');
+  const searchParams = useSearchParams();
+  const { loadGraph, setMeta } = useBuilderStore();
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (loaded) return;
+    const templateId = searchParams.get('template');
+    if (templateId) {
+      const template = TEMPLATES.find(t => t.id === templateId);
+      if (template) {
+        loadGraph(template.nodes, template.edges);
+        setMeta({ name: template.name, description: template.description });
+      }
+    }
+    setLoaded(true);
+  }, [searchParams, loadGraph, setMeta, loaded]);
 
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-200">
@@ -35,5 +54,13 @@ export default function BuilderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BuilderPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen bg-zinc-950 items-center justify-center text-zinc-500">Loading...</div>}>
+      <BuilderWithParams />
+    </Suspense>
   );
 }
