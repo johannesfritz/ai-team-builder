@@ -56,10 +56,10 @@ export function WorkflowView() {
       {selectedCommandId && steps.length > 0 ? (
         <>
           {/* Phase groups */}
-          <div className="space-y-2 mb-6">
+          <div key={selectedCommandId} className="space-y-2 mb-6">
             {steps.map((step, index) => (
               <WorkflowStepCard
-                key={step.nodeId}
+                key={`${selectedCommandId}-${index}`}
                 step={step}
                 index={index}
                 isLast={index === steps.length - 1}
