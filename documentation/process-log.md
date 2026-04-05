@@ -41,6 +41,35 @@
   - `~/.gstack/projects/johannesfritz-ai-team-builder/ceo-plans/2026-04-06-smart-static-expansion.md` — CEO plan with scope decisions
 - **Next:** Phase 1 implementation (error handling, edge creation UX, schema migration, Plausible analytics, more unit tests)
 
+### 2026-04-06 — Eng review + implementation sprint
+
+- **Attempted:** Full engineering review (/plan-eng-review) + implementation of 4 fixes + complete test suite
+- **Eng Review Findings:**
+  - 1 architecture issue: cycle detection missing in derive.ts (fixed)
+  - 3 code quality issues: nodeCounter global mutable (fixed), silent serialize errors (noted for Phase 2), schema migration (confirmed P0)
+  - 34 test gaps identified (28% coverage → ~85%)
+  - 3 critical failure modes: browser freeze from cycles (fixed), localStorage silent data loss (Phase 1), empty graph silent export (Phase 1)
+  - 0 performance issues
+- **Implementation:**
+  - Fixed cycle detection: added visited set to collectAncestors BFS in derive.ts
+  - Refactored nodeCounter: replaced module-level mutable with closure in parse-plugin.ts
+  - Added MCP env editor: key-value pair editor in PropertyPanel McpFields
+  - Improved error boundary: better messaging about corrupted saved data
+  - Wrote 58 new tests across 4 test files (serialize, import, validation, derive)
+  - Total: 71 tests, all passing in 342ms
+- **Review Status:** CEO + ENG both CLEARED. Ready for Phase 1 implementation.
+- **Produced:**
+  - `src/lib/workflow/derive.ts` — cycle detection fix
+  - `src/lib/import/parse-plugin.ts` — nodeCounter refactor
+  - `src/components/builder/PropertyPanel.tsx` — MCP env editor
+  - `src/app/builder/error.tsx` — improved error boundary
+  - `src/lib/export/__tests__/serialize.test.ts` — 12 tests
+  - `src/lib/import/__tests__/parse-plugin.test.ts` — 10 tests
+  - `src/lib/__tests__/validation.test.ts` — 25 tests
+  - `src/lib/workflow/__tests__/derive.test.ts` — 11 tests
+  - `inbox/plans/PLAN-2026-001.md` — review report section
+- **Next:** Phase 1 remaining items: schema migration skeleton, error handling for 10 paths, edge creation UX, command selector fix, Plausible analytics
+
 
 
 ### 2026-03-28 — Full product discovery
