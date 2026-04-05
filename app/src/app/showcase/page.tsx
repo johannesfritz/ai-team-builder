@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { fetchPlugins, fetchPlugin, type PluginSummary, type PluginDetail } from '@/lib/api';
 import { parsePluginFiles } from '@/lib/import/parse-plugin';
+import { TEMPLATES } from '@/lib/templates';
 import { useBuilderStore } from '@/stores/builder-store';
 import { useRouter } from 'next/navigation';
 
@@ -75,33 +76,67 @@ export default function ShowcasePage() {
         <h1 className="text-3xl font-bold mb-2">Real-World Plugins</h1>
         <p className="text-zinc-400 mb-8">Production Claude Code plugins you can explore and open in the builder.</p>
 
+        {/* Starter Templates */}
+        {!selected && (
+          <>
+            <h2 className="text-xl font-bold mb-4">Starter Templates</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+              {TEMPLATES.map(template => (
+                <Card
+                  key={template.id}
+                  className="bg-zinc-900 border-zinc-800 hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-900/20 transition-all duration-200 p-5 group"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-400">
+                      {template.category}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
+                      {template.nodes.length} nodes
+                    </Badge>
+                  </div>
+                  <h3 className="text-base font-semibold text-zinc-200 mb-1 group-hover:text-emerald-400 transition-colors">{template.name}</h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed mb-3">{template.description}</p>
+                  <Link href={`/builder?template=${template.id}`}>
+                    <Button size="sm" variant="outline" className="border-emerald-700 text-emerald-400 hover:bg-emerald-950 text-xs h-7">
+                      Fork &amp; Customize
+                    </Button>
+                  </Link>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
+
         {loading && <div className="text-zinc-500">Loading plugins...</div>}
 
         {/* Plugin list */}
-        {!selected && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {plugins.map(plugin => (
-              <Card
-                key={plugin.name}
-                className="bg-zinc-900 border-zinc-800 hover:border-emerald-600 transition-colors p-5 cursor-pointer"
-                onClick={() => handleViewDetail(plugin.name)}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-400">
-                    {plugin.category}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
-                    v{plugin.version}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
-                    {plugin.file_count} files
-                  </Badge>
-                </div>
-                <h3 className="text-lg font-semibold text-zinc-200 mb-1">{plugin.title}</h3>
-                <p className="text-sm text-zinc-500 leading-relaxed">{plugin.description}</p>
-              </Card>
-            ))}
-          </div>
+        {!selected && plugins.length > 0 && (
+          <>
+            <h2 className="text-xl font-bold mb-4">Real-World Plugins</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {plugins.map(plugin => (
+                <Card
+                  key={plugin.name}
+                  className="bg-zinc-900 border-zinc-800 hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-900/20 transition-all duration-200 p-5 cursor-pointer group"
+                  onClick={() => handleViewDetail(plugin.name)}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-400">
+                      {plugin.category}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
+                      v{plugin.version}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
+                      {plugin.file_count} files
+                    </Badge>
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-200 mb-1 group-hover:text-emerald-400 transition-colors">{plugin.title}</h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed">{plugin.description}</p>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Plugin detail */}

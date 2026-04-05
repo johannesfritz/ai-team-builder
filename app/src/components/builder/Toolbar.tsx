@@ -6,11 +6,14 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useBuilderStore } from '@/stores/builder-store';
 import { serializeGraph } from '@/lib/export/serialize';
+import { generateMcpbBundle, downloadBlob } from '@/lib/export/mcpb';
+import { encodeShareURL } from '@/lib/share';
 import { toast } from '@/lib/toast';
 import { trackEvent } from '@/lib/analytics';
 import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-types';
 import { ImportDialog } from './ImportDialog';
 import { CreateNodeDialog } from './CreateNodeDialog';
+import { HealthIndicator } from './HealthIndicator';
 
 const NODE_TYPES: PluginNodeType[] = ['rule', 'hook', 'skill', 'command', 'agent', 'mcp'];
 
@@ -45,6 +48,32 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
     setExportOutput(output);
     setShowExport(true);
     trackEvent('Export Plugin', { nodeCount: String(nodes.length), errorCount: String(result.errors.length) });
+  };
+
+  const handleShare = () => {
+    if (nodes.length === 0) {
+      toast('Add at least one component before sharing', 'warning');
+      return;
+    }
+    const state = {
+      nodes,
+      edges,
+      meta: { name: meta.name, description: meta.description },
+    };
+    const baseUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}${window.location.pathname}`
+      : 'https://example.com/builder';
+    const result = encodeShareURL(state, baseUrl);
+    if ('error' in result) {
+      toast(result.error, 'error');
+      return;
+    }
+    navigator.clipboard.writeText(result.url).then(() => {
+      toast('Share URL copied to clipboard', 'success');
+    }).catch(() => {
+      toast('Could not copy to clipboard', 'error');
+    });
+    trackEvent('Share URL', { nodeCount: String(nodes.length) });
   };
 
   return (
@@ -94,6 +123,15 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
 
         <Button
           size="sm"
+          variant="outline"
+          className="border-violet-600 text-violet-400 hover:bg-violet-950 font-semibold h-8"
+          onClick={handleShare}
+        >
+          Share URL
+        </Button>
+
+        <Button
+          size="sm"
           className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-9"
           onClick={handleExport}
         >
@@ -109,6 +147,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
               {edges.length} edges
             </Badge>
           </div>
+          <HealthIndicator />
           <div className="text-[9px] text-zinc-700 leading-tight">
             Valid: hook→rule/skill, agent→skill, skill→command
           </div>
@@ -170,7 +209,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
                 </div>
               </div>
 
-              <div className="p-4 border-t border-zinc-800">
+              <div className="p-4 border-t border-zinc-800 space-y-2">
                 <Button
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                   onClick={() => {
@@ -183,7 +222,22 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
                     URL.revokeObjectURL(url);
                   }}
                 >
-                  Download {pluginSlug}-plugin.json
+                  Download JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full border-purple-600 text-purple-400 hover:bg-purple-950 font-semibold"
+                  onClick={async () => {
+                    try {
+                      const blob = await generateMcpbBundle(result.files, meta.name || pluginSlug, '1.0.0', meta.description);
+                      downloadBlob(blob, `${pluginSlug}.mcpb`);
+                      trackEvent('Export MCPB', { nodeCount: String(nodes.length) });
+                    } catch {
+                      toast('Failed to generate MCPB bundle', 'error');
+                    }
+                  }}
+                >
+                  Download MCPB Bundle
                 </Button>
               </div>
             </div>

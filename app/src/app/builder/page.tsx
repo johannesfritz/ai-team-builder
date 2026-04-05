@@ -7,22 +7,45 @@ import { WorkflowView } from '@/components/builder/WorkflowView';
 import { BuilderCanvas } from '@/components/builder/Canvas';
 import { PropertyPanel } from '@/components/builder/PropertyPanel';
 import { DryRunPanel } from '@/components/builder/DryRun';
+import { LivePreview } from '@/components/builder/LivePreview';
 import { Toolbar } from '@/components/builder/Toolbar';
+import { CommandPalette } from '@/components/builder/CommandPalette';
 import { useBuilderStore } from '@/stores/builder-store';
 import { TEMPLATES } from '@/lib/templates';
+import { serializeGraph } from '@/lib/export/serialize';
+import { encodeShareURL } from '@/lib/share';
+import { decodeShareURL } from '@/lib/share';
+import { toast } from '@/lib/toast';
 
 type MainView = 'setup' | 'workflow' | 'canvas';
-type RightPanel = 'properties' | 'dryrun';
+type RightPanel = 'properties' | 'dryrun' | 'preview';
 
 function BuilderWithParams() {
   const [mainView, setMainView] = useState<MainView>('setup');
   const [rightPanel, setRightPanel] = useState<RightPanel>('properties');
   const searchParams = useSearchParams();
-  const { loadGraph, setMeta, undo, redo } = useBuilderStore();
+  const { nodes, edges, meta, loadGraph, setMeta, undo, redo } = useBuilderStore();
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (loaded) return;
+
+    // Check for share URL hash first
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#v1:')) {
+      const result = decodeShareURL(window.location.hash);
+      if ('nodes' in result) {
+        loadGraph(result.nodes as Parameters<typeof loadGraph>[0], result.edges as Parameters<typeof loadGraph>[1]);
+        setMeta({ name: result.meta.name, description: result.meta.description });
+        toast('Shared plugin loaded successfully', 'success');
+        // Clear the hash to avoid re-loading on navigation
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        setLoaded(true);
+        return;
+      } else {
+        toast(result.error, 'error');
+      }
+    }
+
     const templateId = searchParams.get('template');
     if (templateId) {
       const template = TEMPLATES.find(t => t.id === templateId);
@@ -49,9 +72,62 @@ function BuilderWithParams() {
     return () => window.removeEventListener('keydown', handler);
   }, [undo, redo]);
 
+  const handleCmdExport = () => {
+    if (nodes.length === 0) { toast('Add at least one component before exporting', 'warning'); return; }
+    const result = serializeGraph(nodes, edges, meta.name || 'my-plugin', '1.0.0', meta.description);
+    const pluginSlug = (meta.name || 'my-plugin').toLowerCase().replace(/\s+/g, '-');
+    const blob = new Blob([JSON.stringify({ files: result.files }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${pluginSlug}-plugin.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Plugin exported', 'success');
+  };
+
+  const handleCmdImport = () => {
+    // Trigger a file input click for importing
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (data.nodes && data.edges) {
+          loadGraph(data.nodes, data.edges);
+          if (data.meta) setMeta(data.meta);
+          toast('Plugin imported', 'success');
+        }
+      } catch {
+        toast('Failed to import file', 'error');
+      }
+    };
+    input.click();
+  };
+
+  const handleCmdShare = () => {
+    if (nodes.length === 0) { toast('Add at least one component before sharing', 'warning'); return; }
+    const state = { nodes, edges, meta: { name: meta.name, description: meta.description } };
+    const baseUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}${window.location.pathname}`
+      : 'https://example.com/builder';
+    const result = encodeShareURL(state, baseUrl);
+    if ('error' in result) { toast(result.error, 'error'); return; }
+    navigator.clipboard.writeText(result.url).then(() => {
+      toast('Share URL copied to clipboard', 'success');
+    }).catch(() => {
+      toast('Could not copy to clipboard', 'error');
+    });
+  };
+
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-200">
       <Toolbar onShowDryRun={() => setRightPanel('dryrun')} />
+      <CommandPalette onExport={handleCmdExport} onImport={handleCmdImport} onShare={handleCmdShare} />
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -112,9 +188,17 @@ function BuilderWithParams() {
           >
             Dry Run
           </button>
+          <button
+            className={`flex-1 px-3 py-2 text-xs font-medium ${rightPanel === 'preview' ? 'text-zinc-200 border-b-2 border-emerald-500' : 'text-zinc-500'}`}
+            onClick={() => setRightPanel('preview')}
+          >
+            Preview
+          </button>
         </div>
         <div className="flex-1 overflow-hidden">
-          {rightPanel === 'properties' ? <PropertyPanel /> : <DryRunPanel />}
+          {rightPanel === 'properties' && <PropertyPanel />}
+          {rightPanel === 'dryrun' && <DryRunPanel />}
+          {rightPanel === 'preview' && <LivePreview />}
         </div>
       </div>
     </div>
