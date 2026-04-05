@@ -19,15 +19,18 @@ function estimateTokens(text: string): number {
 }
 
 // Walk backwards from a node, collecting all ancestors via edges
+// Uses a visited set to prevent infinite loops from circular edges
 function collectAncestors(nodeId: string, nodes: Node[], edges: Edge[]): Set<string> {
   const ancestors = new Set<string>();
+  const visited = new Set<string>([nodeId]);
   const queue = [nodeId];
 
   while (queue.length > 0) {
     const current = queue.shift()!;
     const incomingEdges = edges.filter(e => e.target === current);
     for (const edge of incomingEdges) {
-      if (!ancestors.has(edge.source)) {
+      if (!visited.has(edge.source)) {
+        visited.add(edge.source);
         ancestors.add(edge.source);
         queue.push(edge.source);
       }

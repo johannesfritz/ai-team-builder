@@ -297,6 +297,26 @@ function AgentFields({ data, update, type }: { data: Record<string, unknown>; up
 }
 
 function McpFields({ data, update, type }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType }) {
+  const env = (data.env as Record<string, string>) || {};
+  const envEntries = Object.entries(env);
+
+  const updateEnv = (oldKey: string, newKey: string, value: string) => {
+    const newEnv = { ...env };
+    if (oldKey !== newKey) delete newEnv[oldKey];
+    newEnv[newKey] = value;
+    update('env', newEnv);
+  };
+
+  const removeEnvKey = (key: string) => {
+    const newEnv = { ...env };
+    delete newEnv[key];
+    update('env', newEnv);
+  };
+
+  const addEnvKey = () => {
+    update('env', { ...env, '': '' });
+  };
+
   return (
     <>
       <GuidedField fieldKey="serverName" label="Server Name" type={type} data={data}>
@@ -313,6 +333,32 @@ function McpFields({ data, update, type }: { data: Record<string, unknown>; upda
           className="bg-zinc-900 border-zinc-700 font-mono text-xs"
         />
       </GuidedField>
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-zinc-400">Environment Variables</Label>
+          <button type="button" onClick={addEnvKey} className="text-[10px] text-emerald-500 hover:text-emerald-400">+ Add</button>
+        </div>
+        {envEntries.length === 0 && (
+          <div className="text-[10px] text-zinc-600 italic">No environment variables. Click + Add to set API keys, config, etc.</div>
+        )}
+        {envEntries.map(([key, value], i) => (
+          <div key={i} className="flex gap-1.5 items-center">
+            <Input
+              value={key}
+              onChange={e => updateEnv(key, e.target.value, value)}
+              placeholder="KEY"
+              className="bg-zinc-900 border-zinc-700 font-mono text-[10px] flex-1"
+            />
+            <Input
+              value={value}
+              onChange={e => updateEnv(key, key, e.target.value)}
+              placeholder="value"
+              className="bg-zinc-900 border-zinc-700 font-mono text-[10px] flex-1"
+            />
+            <button type="button" onClick={() => removeEnvKey(key)} className="text-zinc-600 hover:text-red-400 text-xs px-1">×</button>
+          </div>
+        ))}
+      </div>
     </>
   );
 }

@@ -14,6 +14,7 @@ export default function BuilderError({
       <div className="text-center space-y-4 max-w-md p-8">
         <h2 className="text-lg font-bold text-zinc-200">Something went wrong</h2>
         <p className="text-sm text-zinc-500">{error.message || "The builder encountered an error."}</p>
+        <p className="text-xs text-zinc-600">This might be caused by corrupted saved data. Try again, or reset to clear saved state.</p>
         <div className="flex gap-3 justify-center">
           <Button variant="outline" className="border-zinc-700 text-zinc-300" onClick={reset}>
             Try again

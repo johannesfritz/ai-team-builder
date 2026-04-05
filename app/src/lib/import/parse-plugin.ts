@@ -16,9 +16,9 @@ interface ImportResult {
   warnings: string[];
 }
 
-let nodeCounter = 0;
-function nextId(type: string): string {
-  return `${type}-import-${++nodeCounter}`;
+function createIdGenerator() {
+  let counter = 0;
+  return (type: string): string => `${type}-import-${++counter}`;
 }
 
 function parseFrontmatter(content: string): { frontmatter: Record<string, string>; body: string } {
@@ -41,7 +41,7 @@ function parsePathsList(content: string): string {
 }
 
 export function parsePluginFiles(files: ImportFile[]): ImportResult {
-  nodeCounter = 0;
+  const nextId = createIdGenerator();
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const warnings: string[] = [];
