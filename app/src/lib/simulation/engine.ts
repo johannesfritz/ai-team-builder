@@ -2,6 +2,7 @@
 // No LLM calls — traces which components would fire based on event matching
 
 import type { Node, Edge } from '@xyflow/react';
+import picomatch from 'picomatch';
 import type { RuleData, HookData, SkillData, CommandData, PluginNodeType } from '../plugin-types';
 
 export interface SimulationStep {
@@ -38,13 +39,8 @@ function estimateTokens(text: string): number {
 
 function matchesGlob(pattern: string, path: string): boolean {
   if (!pattern || !path) return false;
-  const regex = pattern
-    .replace(/\./g, '\\.')
-    .replace(/\*\*/g, '{{GLOBSTAR}}')
-    .replace(/\*/g, '[^/]*')
-    .replace(/\{\{GLOBSTAR\}\}/g, '.*');
   try {
-    return new RegExp(`^${regex}$`).test(path);
+    return picomatch.isMatch(path, pattern);
   } catch {
     return false;
   }

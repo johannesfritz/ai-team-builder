@@ -7,9 +7,41 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**LIVE at https://jfritz.xyz/ai-team-builder/**. Overnight sprint complete (JF-232 + JF-233 DONE). Plugin name editor, import parser fixes, workflow phase extraction, landing page upgrade, fullscreen editor, iran-monitor showcase, 4 new jf-dev commands + 1 rule. All pages 200 on production. Continuing with further improvements.
+**LIVE at https://jfritz.xyz/ai-team-builder/**. CEO review complete (2026-04-06). Approach: Smart Static + Hetzner proxy. 6 scope expansions accepted (shareable URLs, live preview, fork gallery, health score, Cmd+K, MCPB export). Glob matcher fixed (picomatch), vitest configured with 13 passing tests, plan rewritten to reflect reality. Next: Phase 1 implementation.
 
 ## Log
+
+### 2026-04-06 — CEO review + glob fix + vitest setup + plan rewrite
+
+- **Attempted:** Full CEO plan review (/plan-ceo-review) + 3 implementation tasks
+- **CEO Review Decisions:**
+  - Approach: Smart Static (keep Hetzner, add localStorage persist + Hetzner proxy for GitHub)
+  - Mode: SCOPE EXPANSION — 6/8 proposals accepted
+  - Accepted: shareable URLs, live preview pane, fork gallery, plugin health score, Cmd+K palette, MCPB export
+  - Deferred: smart defaults from description, visual diff on import
+  - Architecture: switched from Cloudflare Worker to Hetzner proxy (simpler, one deployment target)
+  - Sharing: URL hash for small plugins + Gist fallback for large ones
+  - Edge creation: both canvas view AND property panel dropdowns
+  - Security: DOMPurify for XSS on shared URL content
+  - URL versioning: v1: prefix for future compatibility
+- **Implementation:**
+  - Fixed glob matcher: replaced naive regex conversion with picomatch library. Old implementation broke on patterns like `src/**/*.py` and `**/*.{ts,tsx}`.
+  - Set up vitest: installed vitest, created config, added test scripts, wrote 13 unit tests for simulation engine (all pass)
+  - Rewrote PLAN-2026-001.md (v3): updated architecture diagram, stack table, feature status, implementation phases to match Smart Static reality
+  - Created TODOS.md with deferred items
+  - Created CLAUDE.md with skill routing rules
+- **Outside voice (Claude subagent):** 11 findings including broken glob matcher (fixed), stale plan (fixed), persistence already exists (confirmed), CF Worker wrong tool (switched to Hetzner), URL sharing ceiling (added Gist fallback)
+- **Produced:**
+  - `src/lib/simulation/engine.ts` �� glob matcher fix (picomatch)
+  - `src/lib/simulation/__tests__/engine.test.ts` — 13 unit tests
+  - `vitest.config.ts` — test configuration
+  - `TODOS.md` — deferred work items
+  - `CLAUDE.md` — skill routing rules
+  - `inbox/plans/PLAN-2026-001.md` — v3 plan rewrite
+  - `~/.gstack/projects/johannesfritz-ai-team-builder/ceo-plans/2026-04-06-smart-static-expansion.md` — CEO plan with scope decisions
+- **Next:** Phase 1 implementation (error handling, edge creation UX, schema migration, Plausible analytics, more unit tests)
+
+
 
 ### 2026-03-28 — Full product discovery
 
