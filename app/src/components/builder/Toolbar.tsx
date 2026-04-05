@@ -6,6 +6,8 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useBuilderStore } from '@/stores/builder-store';
 import { serializeGraph } from '@/lib/export/serialize';
+import { toast } from '@/lib/toast';
+import { trackEvent } from '@/lib/analytics';
 import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-types';
 import { ImportDialog } from './ImportDialog';
 import { CreateNodeDialog } from './CreateNodeDialog';
@@ -20,22 +22,29 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
   const [createDialogType, setCreateDialogType] = useState<PluginNodeType | undefined>(undefined);
 
   const handleExport = () => {
+    if (nodes.length === 0) {
+      toast('Add at least one component before exporting', 'warning');
+      return;
+    }
     const result = serializeGraph(nodes, edges, meta.name || 'my-plugin', '1.0.0', meta.description);
-    let output = '';
 
+    if (result.errors.length > 0) {
+      toast(`${result.errors.length} node(s) skipped due to missing fields`, 'warning');
+    }
+
+    let output = '';
     if (result.errors.length > 0) {
       output += `ERRORS:\n${result.errors.map(e => e.message).join('\n')}\n\n`;
     }
-
     output += `FILES (${result.files.length}):\n`;
     for (const file of result.files) {
       output += `\n--- ${file.path} ---\n${file.content}\n`;
     }
-
     output += `\nToken estimate: ~${result.tokenEstimate} tokens\n`;
 
     setExportOutput(output);
     setShowExport(true);
+    trackEvent('Export Plugin', { nodeCount: String(nodes.length), errorCount: String(result.errors.length) });
   };
 
   return (

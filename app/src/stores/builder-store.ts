@@ -190,5 +190,44 @@ export const useBuilderStore = create<BuilderState>()(persist((set, get) => ({
       edges: state.edges,
       meta: state.meta,
     }),
+    onRehydrateStorage: () => {
+      return (_state, error) => {
+        if (error) {
+          console.error('Failed to rehydrate builder store:', error);
+          // Dynamically import to avoid circular dependency
+          import('@/lib/toast').then(({ toast }) => {
+            toast('Could not restore saved data. Starting fresh.', 'warning');
+          });
+        }
+      };
+    },
+    storage: {
+      getItem: (name) => {
+        try {
+          const value = localStorage.getItem(name);
+          return value ? JSON.parse(value) : null;
+        } catch {
+          return null;
+        }
+      },
+      setItem: (name, value) => {
+        try {
+          localStorage.setItem(name, JSON.stringify(value));
+        } catch (e) {
+          if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+            import('@/lib/toast').then(({ toast }) => {
+              toast('Storage full. Export your plugin to avoid data loss.', 'error');
+            });
+          }
+        }
+      },
+      removeItem: (name) => {
+        try {
+          localStorage.removeItem(name);
+        } catch {
+          // Silently fail on remove
+        }
+      },
+    },
   },
 ));
