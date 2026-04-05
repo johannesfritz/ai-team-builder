@@ -176,6 +176,15 @@ export const useBuilderStore = create<BuilderState>()(persist((set, get) => ({
 }),
   {
     name: 'ai-team-builder',
+    version: 1,
+    migrate: (persistedState: unknown, version: number) => {
+      const state = persistedState as Record<string, unknown>;
+      if (version === 0) {
+        // v0 → v1: no shape changes, just adding version tracking
+        return state;
+      }
+      return state;
+    },
     partialize: (state) => ({
       nodes: state.nodes,
       edges: state.edges,

@@ -4,13 +4,14 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TeamSetupView } from '@/components/builder/TeamSetupView';
 import { WorkflowView } from '@/components/builder/WorkflowView';
+import { BuilderCanvas } from '@/components/builder/Canvas';
 import { PropertyPanel } from '@/components/builder/PropertyPanel';
 import { DryRunPanel } from '@/components/builder/DryRun';
 import { Toolbar } from '@/components/builder/Toolbar';
 import { useBuilderStore } from '@/stores/builder-store';
 import { TEMPLATES } from '@/lib/templates';
 
-type MainView = 'setup' | 'workflow';
+type MainView = 'setup' | 'workflow' | 'canvas';
 type RightPanel = 'properties' | 'dryrun';
 
 function BuilderWithParams() {
@@ -42,6 +43,7 @@ function BuilderWithParams() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'y') { e.preventDefault(); redo(); }
       if (e.key === '1' && !e.metaKey && !e.ctrlKey) setMainView('setup');
       if (e.key === '2' && !e.metaKey && !e.ctrlKey) setMainView('workflow');
+      if (e.key === '3' && !e.metaKey && !e.ctrlKey) setMainView('canvas');
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -75,15 +77,23 @@ function BuilderWithParams() {
           >
             Workflow
           </button>
+          <button
+            className={`px-4 py-2.5 text-xs font-medium transition-colors ${
+              mainView === 'canvas'
+                ? 'text-zinc-200 border-b-2 border-emerald-500 bg-zinc-900/50'
+                : 'text-zinc-500 hover:text-zinc-400'
+            }`}
+            onClick={() => setMainView('canvas')}
+          >
+            Canvas
+          </button>
         </div>
 
         {/* View content */}
         <div className="flex-1 relative overflow-hidden">
-          {mainView === 'setup' ? (
-            <TeamSetupView />
-          ) : (
-            <WorkflowView />
-          )}
+          {mainView === 'setup' && <TeamSetupView />}
+          {mainView === 'workflow' && <WorkflowView />}
+          {mainView === 'canvas' && <BuilderCanvas />}
         </div>
       </div>
 

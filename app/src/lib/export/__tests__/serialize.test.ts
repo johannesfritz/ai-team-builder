@@ -97,15 +97,16 @@ describe('serializeGraph', () => {
     expect(parsed.mcpServers['my-api'].env.API_KEY).toBe('test');
   });
 
-  it('reports errors for nodes with missing required fields', () => {
+  it('reports structured errors for nodes with missing required fields', () => {
     const nodes = [
       makeNode('r1', 'rule', { name: '', label: 'My Rule', content: 'content' }),
       makeNode('c1', 'command', { name: '', label: 'My Cmd', prompt: 'do stuff' }),
     ];
     const result = serializeGraph(nodes, []);
     expect(result.errors).toHaveLength(2);
-    expect(result.errors[0]).toContain('Rule');
-    expect(result.errors[1]).toContain('Command');
+    expect(result.errors[0]).toMatchObject({ nodeId: 'r1', nodeType: 'rule' });
+    expect(result.errors[0].message).toContain('Rule');
+    expect(result.errors[1]).toMatchObject({ nodeId: 'c1', nodeType: 'command' });
   });
 
   it('estimates tokens across all nodes', () => {

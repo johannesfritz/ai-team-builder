@@ -6,9 +6,15 @@ export interface PluginFile {
   content: string;
 }
 
+export interface SerializationError {
+  nodeId: string;
+  nodeType: string;
+  message: string;
+}
+
 export interface SerializationResult {
   files: PluginFile[];
-  errors: string[];
+  errors: SerializationError[];
   tokenEstimate: number;
 }
 
@@ -24,7 +30,7 @@ export function serializeGraph(
   pluginDescription: string = '',
 ): SerializationResult {
   const files: PluginFile[] = [];
-  const errors: string[] = [];
+  const errors: SerializationError[] = [];
   let totalTokens = 0;
 
   files.push({
@@ -43,7 +49,7 @@ export function serializeGraph(
     switch (type) {
       case 'rule': {
         const d = node.data as unknown as RuleData;
-        if (!d.name) { errors.push(`Rule node "${d.label}" has no name`); continue; }
+        if (!d.name) { errors.push({ nodeId: node.id, nodeType: 'rule', message: `Rule "${(d as unknown as Record<string,string>).label || 'unnamed'}" has no name` }); continue; }
         let content = '';
         if (d.pathFilter) {
           content += `---\npaths:\n  - "${d.pathFilter}"\n---\n\n`;
@@ -56,7 +62,7 @@ export function serializeGraph(
 
       case 'skill': {
         const d = node.data as unknown as SkillData;
-        if (!d.name) { errors.push(`Skill node "${d.label}" has no name`); continue; }
+        if (!d.name) { errors.push({ nodeId: node.id, nodeType: 'skill', message: `Skill "${(d as unknown as Record<string,string>).label || 'unnamed'}" has no name` }); continue; }
         const fm: string[] = ['---'];
         if (d.description) fm.push(`description: "${d.description}"`);
         if (d.filePattern) fm.push(`filePattern: "${d.filePattern}"`);
@@ -70,7 +76,7 @@ export function serializeGraph(
 
       case 'command': {
         const d = node.data as unknown as CommandData;
-        if (!d.name) { errors.push(`Command node "${d.label}" has no name`); continue; }
+        if (!d.name) { errors.push({ nodeId: node.id, nodeType: 'command', message: `Command "${(d as unknown as Record<string,string>).label || 'unnamed'}" has no name` }); continue; }
         const content = d.prompt || `# ${d.name}`;
         totalTokens += estimateTokens(content);
         files.push({ path: `commands/${d.name}.md`, content });
@@ -79,7 +85,7 @@ export function serializeGraph(
 
       case 'agent': {
         const d = node.data as unknown as AgentData;
-        if (!d.name) { errors.push(`Agent node "${d.label}" has no name`); continue; }
+        if (!d.name) { errors.push({ nodeId: node.id, nodeType: 'agent', message: `Agent "${(d as unknown as Record<string,string>).label || 'unnamed'}" has no name` }); continue; }
         let content = `# ${d.name}\n\n`;
         if (d.model) content += `**Model:** ${d.model}\n\n`;
         if (d.systemPrompt) content += `## System Prompt\n\n${d.systemPrompt}\n\n`;
@@ -142,7 +148,7 @@ export function serializeGraph(
 
     for (const mcpNode of mcpNodes) {
       const d = mcpNode.data as unknown as McpData;
-      if (!d.serverName) { errors.push(`MCP node "${d.label}" has no server name`); continue; }
+      if (!d.serverName) { errors.push({ nodeId: mcpNode.id, nodeType: 'mcp', message: `MCP "${(d as unknown as Record<string,string>).label || 'unnamed'}" has no server name` }); continue; }
       mcpConfig[d.serverName] = {
         command: d.command || 'node',
         args: d.args || [],

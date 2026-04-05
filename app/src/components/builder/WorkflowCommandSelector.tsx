@@ -25,8 +25,6 @@ export function WorkflowCommandSelector({ selectedCommandId, onSelect, onCreateN
     );
   }
 
-  const selectedName = commands.find(c => c.id === selectedCommandId)?.name;
-
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs text-zinc-400">Workflow for:</span>
@@ -34,6 +32,7 @@ export function WorkflowCommandSelector({ selectedCommandId, onSelect, onCreateN
         value={selectedCommandId || ''}
         onChange={e => onSelect(e.target.value)}
         className="h-8 px-3 bg-zinc-900 border border-zinc-700 rounded-md text-xs text-zinc-200 outline-none focus:border-emerald-500 min-w-[180px]"
+        title={commands.find(c => c.id === selectedCommandId)?.name ? `/${commands.find(c => c.id === selectedCommandId)!.name}` : ''}
       >
         {commands.map(cmd => (
           <option key={cmd.id} value={cmd.id}>

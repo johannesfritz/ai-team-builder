@@ -11,12 +11,13 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { FullscreenEditor } from './FullscreenEditor';
-import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-types';
+import { type Node, type Edge } from '@xyflow/react';
+import { NODE_COLORS, NODE_LABELS, VALID_CONNECTIONS, type PluginNodeType } from '@/lib/plugin-types';
 import { GUIDANCE } from '@/lib/guidance';
 import { validateNode } from '@/lib/validation';
 
 export function PropertyPanel() {
-  const { nodes, selectedNodeId, updateNodeData, deleteNode, setSelectedNodeId } = useBuilderStore();
+  const { nodes, edges, selectedNodeId, updateNodeData, deleteNode, setSelectedNodeId } = useBuilderStore();
   const node = nodes.find(n => n.id === selectedNodeId);
 
   if (!node) {
@@ -69,6 +70,8 @@ export function PropertyPanel() {
         {type === 'command' && <CommandFields data={data} update={update} type={type} />}
         {type === 'agent' && <AgentFields data={data} update={update} type={type} />}
         {type === 'mcp' && <McpFields data={data} update={update} type={type} />}
+
+        <ConnectionsSection nodeId={node.id} nodeType={type} nodes={nodes} edges={edges} />
 
         <Separator className="bg-zinc-800" />
 
@@ -360,6 +363,64 @@ function McpFields({ data, update, type }: { data: Record<string, unknown>; upda
         ))}
       </div>
     </>
+  );
+}
+
+function ConnectionsSection({ nodeId, nodeType, nodes, edges }: {
+  nodeId: string; nodeType: PluginNodeType; nodes: Node[]; edges: Edge[];
+}) {
+  const { onConnect } = useBuilderStore();
+  const validTargetTypes = VALID_CONNECTIONS[nodeType];
+  if (validTargetTypes.length === 0) return null;
+
+  const outgoingEdges = edges.filter(e => e.source === nodeId);
+  const connectedTargetIds = new Set(outgoingEdges.map(e => e.target));
+  const availableTargets = nodes.filter(
+    n => validTargetTypes.includes(n.type as PluginNodeType) && !connectedTargetIds.has(n.id) && n.id !== nodeId
+  );
+
+  const handleConnect = (targetId: string) => {
+    if (!targetId) return;
+    onConnect({ source: nodeId, target: targetId, sourceHandle: null, targetHandle: null });
+  };
+
+  const handleDisconnect = (edgeId: string) => {
+    useBuilderStore.getState().onEdgesChange([{ id: edgeId, type: 'remove' }]);
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs text-zinc-400">Connections</Label>
+      {outgoingEdges.map(edge => {
+        const target = nodes.find(n => n.id === edge.target);
+        const targetName = target
+          ? ((target.data as Record<string, unknown>).name as string || (target.data as Record<string, unknown>).label as string || target.type)
+          : 'Unknown';
+        return (
+          <div key={edge.id} className="flex items-center justify-between bg-zinc-900 rounded px-2 py-1.5 border border-zinc-800">
+            <span className="text-[11px] text-zinc-300">&rarr; {targetName}</span>
+            <button type="button" onClick={() => handleDisconnect(edge.id)} className="text-zinc-600 hover:text-red-400 text-xs px-1">&times;</button>
+          </div>
+        );
+      })}
+      {availableTargets.length > 0 && (
+        <select
+          className="w-full h-7 px-2 bg-zinc-900 border border-zinc-700 rounded text-[11px] text-zinc-400"
+          value=""
+          onChange={e => handleConnect(e.target.value)}
+        >
+          <option value="">+ Connect to...</option>
+          {availableTargets.map(t => (
+            <option key={t.id} value={t.id}>
+              {(t.data as Record<string, unknown>).name as string || (t.data as Record<string, unknown>).label as string || t.type} ({t.type})
+            </option>
+          ))}
+        </select>
+      )}
+      {outgoingEdges.length === 0 && availableTargets.length === 0 && (
+        <div className="text-[10px] text-zinc-600 italic">No compatible targets. Add a {validTargetTypes.join(' or ')} first.</div>
+      )}
+    </div>
   );
 }
 

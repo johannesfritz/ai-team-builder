@@ -24,7 +24,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
     let output = '';
 
     if (result.errors.length > 0) {
-      output += `ERRORS:\n${result.errors.join('\n')}\n\n`;
+      output += `ERRORS:\n${result.errors.map(e => e.message).join('\n')}\n\n`;
     }
 
     output += `FILES (${result.files.length}):\n`;
@@ -122,7 +122,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
                 {result.errors.length > 0 && (
                   <div className="p-3 bg-red-950 border border-red-800 rounded-lg">
                     <div className="text-xs font-semibold text-red-400 mb-1">Errors ({result.errors.length})</div>
-                    {result.errors.map((e, i) => <div key={i} className="text-[11px] text-red-300">{e}</div>)}
+                    {result.errors.map((e, i) => <div key={i} className="text-[11px] text-red-300">{e.message}</div>)}
                   </div>
                 )}
 
