@@ -119,6 +119,27 @@
 - **Status:** ALL FOUR PHASES COMPLETE
 - **Next:** Deploy to production (build + rsync to Hetzner), then Phase 2+ items (Gist fallback for large plugins, Hetzner proxy for GitHub OAuth)
 
+### 2026-04-06 — Deploy + Hetzner proxy + Gist fallback
+
+- **Attempted:** Deploy to production, build Hetzner proxy, add Gist sharing fallback
+- **Blocker found:** Next.js 16 Turbopack static export broken because project folder is named `app/`, colliding with App Router directory detection. Turbopack treated the project root as the App Router directory instead of finding `src/app/`.
+- **Fix:** Removed the `src/` layer entirely. Moved all source files from `app/src/*` to `app/*`. Updated tsconfig paths `@/* → ./*`.
+- **Deploy:** Built static export, rsync to Hetzner. All 3 routes returning 200.
+- **Hetzner proxy:** Created `server/github-proxy.py` (FastAPI) with OAuth token exchange, GitHub API CORS proxy (repos, gists, git data), IP rate limiting. Systemd service + nginx config.
+- **Gist fallback:** `lib/share.ts` now async. Plugins exceeding URL hash limit fall back to GitHub Gist via proxy. `decodeShareURL` handles both `#v1:` and `#gist:` formats.
+- **GitHub auth:** `lib/github-auth.ts` manages tokens in localStorage. Builder page handles OAuth callback via URL fragment.
+- **Tests:** 97 passing (3 new Gist URL tests)
+- **Linear:** JCC-138
+- **Produced:**
+  - `server/github-proxy.py` — FastAPI proxy (~130 lines)
+  - `server/ai-team-builder-github.service` — systemd unit
+  - `server/nginx-proxy.conf` — nginx location block
+  - `app/lib/github-auth.ts` — token management
+  - Updated `app/lib/share.ts` — async + Gist fallback
+  - Directory restructure: `src/` removed, all source at root level
+- **Remaining:** Deploy proxy to server (register GitHub OAuth App, install Python deps, start service, configure nginx). This requires manual server access with credentials.
+
+
 
 
 ### 2026-03-28 — Full product discovery
