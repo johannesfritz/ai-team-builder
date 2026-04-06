@@ -8,6 +8,7 @@ import { useBuilderStore } from '@/stores/builder-store';
 import { serializeGraph } from '@/lib/export/serialize';
 import { generateMcpbBundle, downloadBlob } from '@/lib/export/mcpb';
 import { encodeShareURL } from '@/lib/share';
+import { getGitHubToken } from '@/lib/github-auth';
 import { toast } from '@/lib/toast';
 import { trackEvent } from '@/lib/analytics';
 import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-types';
@@ -50,7 +51,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
     trackEvent('Export Plugin', { nodeCount: String(nodes.length), errorCount: String(result.errors.length) });
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (nodes.length === 0) {
       toast('Add at least one component before sharing', 'warning');
       return;
@@ -63,7 +64,8 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
     const baseUrl = typeof window !== 'undefined'
       ? `${window.location.origin}${window.location.pathname}`
       : 'https://example.com/builder';
-    const result = encodeShareURL(state, baseUrl);
+    const token = getGitHubToken() ?? undefined;
+    const result = await encodeShareURL(state, baseUrl, token);
     if ('error' in result) {
       toast(result.error, 'error');
       return;
@@ -73,7 +75,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
     }).catch(() => {
       toast('Could not copy to clipboard', 'error');
     });
-    trackEvent('Share URL', { nodeCount: String(nodes.length) });
+    trackEvent('Share URL', { nodeCount: String(nodes.length), method: result.method });
   };
 
   return (

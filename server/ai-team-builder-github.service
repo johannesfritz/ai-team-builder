@@ -1,0 +1,16 @@
+[Unit]
+Description=AI Team Builder GitHub OAuth Proxy
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m uvicorn github-proxy:app --host 127.0.0.1 --port 3848
+WorkingDirectory=/var/www/ai-team-builder-data
+EnvironmentFile=/var/www/ai-team-builder-data/.env
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

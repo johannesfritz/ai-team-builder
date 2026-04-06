@@ -13,8 +13,8 @@ import { CommandPalette } from '@/components/builder/CommandPalette';
 import { useBuilderStore } from '@/stores/builder-store';
 import { TEMPLATES } from '@/lib/templates';
 import { serializeGraph } from '@/lib/export/serialize';
-import { encodeShareURL } from '@/lib/share';
-import { decodeShareURL } from '@/lib/share';
+import { encodeShareURL, decodeShareURL } from '@/lib/share';
+import { getGitHubToken, setGitHubToken } from '@/lib/github-auth';
 import { toast } from '@/lib/toast';
 
 type MainView = 'setup' | 'workflow' | 'canvas';
@@ -30,20 +30,35 @@ function BuilderWithParams() {
   useEffect(() => {
     if (loaded) return;
 
-    // Check for share URL hash first
-    if (typeof window !== 'undefined' && window.location.hash.startsWith('#v1:')) {
-      const result = decodeShareURL(window.location.hash);
-      if ('nodes' in result) {
-        loadGraph(result.nodes as Parameters<typeof loadGraph>[0], result.edges as Parameters<typeof loadGraph>[1]);
-        setMeta({ name: result.meta.name, description: result.meta.description });
-        toast('Shared plugin loaded successfully', 'success');
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+
+    // Handle GitHub OAuth callback: #github_token=...
+    if (hash.startsWith('#github_token=')) {
+      const token = hash.slice('#github_token='.length);
+      if (token) {
+        setGitHubToken(token);
+        toast('GitHub connected', 'success');
+      }
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      setLoaded(true);
+      return;
+    }
+
+    // Check for share URL hash (v1:... or gist:...)
+    if (hash.startsWith('#v1:') || hash.startsWith('#gist:')) {
+      decodeShareURL(hash).then(result => {
+        if ('nodes' in result) {
+          loadGraph(result.nodes as Parameters<typeof loadGraph>[0], result.edges as Parameters<typeof loadGraph>[1]);
+          setMeta({ name: result.meta.name, description: result.meta.description });
+          toast('Shared plugin loaded successfully', 'success');
+        } else {
+          toast(result.error, 'error');
+        }
         // Clear the hash to avoid re-loading on navigation
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        setLoaded(true);
-        return;
-      } else {
-        toast(result.error, 'error');
-      }
+      });
+      setLoaded(true);
+      return;
     }
 
     const templateId = searchParams.get('template');
@@ -109,13 +124,14 @@ function BuilderWithParams() {
     input.click();
   };
 
-  const handleCmdShare = () => {
+  const handleCmdShare = async () => {
     if (nodes.length === 0) { toast('Add at least one component before sharing', 'warning'); return; }
     const state = { nodes, edges, meta: { name: meta.name, description: meta.description } };
     const baseUrl = typeof window !== 'undefined'
       ? `${window.location.origin}${window.location.pathname}`
       : 'https://example.com/builder';
-    const result = encodeShareURL(state, baseUrl);
+    const token = getGitHubToken() ?? undefined;
+    const result = await encodeShareURL(state, baseUrl, token);
     if ('error' in result) { toast(result.error, 'error'); return; }
     navigator.clipboard.writeText(result.url).then(() => {
       toast('Share URL copied to clipboard', 'success');
