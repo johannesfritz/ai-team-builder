@@ -139,6 +139,23 @@
   - Directory restructure: `src/` removed, all source at root level
 - **Remaining:** Deploy proxy to server (register GitHub OAuth App, install Python deps, start service, configure nginx). This requires manual server access with credentials.
 
+### 2026-04-06 — Server proxy deployment + QA
+
+- **Attempted:** Deploy GitHub proxy to Hetzner, run QA on live site
+- **Proxy deployment:**
+  - Registered GitHub OAuth App (callback: jfritz.xyz/ai-team-builder/api/auth/callback)
+  - Installed fastapi/uvicorn/httpx on server
+  - Deployed github-proxy.py to /var/www/ai-team-builder-data/
+  - Started systemd service (ai-team-builder-github, port 3848)
+  - Updated nginx proxy: /ai-team-builder/api/ → localhost:3848
+  - Narrowed OAuth scope from `repo,gist` to `public_repo,gist`
+  - Health check passing, OAuth redirect working
+- **QA results:** Health score 88/100
+  - ISSUE-001 (Medium): Create dialog pre-fill bug — name showed as placeholder, button disabled. FIXED: pre-fill with example value. Deployed.
+  - ISSUE-002 (Low): Showcase page missing real-world plugin cards. Deferred.
+- **Linear:** JCC-138 (deploy), JCC-143 (QA)
+- **Status:** PROJECT COMPLETE. All features live, proxy running, QA passed.
+
 
 
 
