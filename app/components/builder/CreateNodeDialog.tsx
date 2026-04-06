@@ -49,11 +49,11 @@ export function CreateNodeDialog({ open, onClose, presetType }: CreateNodeDialog
   const handleSelectType = (type: PluginNodeType) => {
     setSelectedType(type);
     setStep('fields');
-    // Pre-fill defaults
+    // Pre-fill defaults with example values for required name fields
     const defaults: Record<string, unknown> = {};
     const guidance = GUIDANCE[type];
     for (const [key, fg] of Object.entries(guidance.fields)) {
-      defaults[key] = '';
+      defaults[key] = (key === 'name' || key === 'serverName') && fg.example ? fg.example : '';
     }
     if (type === 'agent') defaults.model = 'inherit';
     if (type === 'hook') defaults.event = 'PreToolUse';
