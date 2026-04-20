@@ -17,3 +17,5 @@ spike-1-reactflow/node_modules/
 spike-1-reactflow/dist/
 .playwright-mcp/
 *.png
+.gstack/
+.claude/sessions/
