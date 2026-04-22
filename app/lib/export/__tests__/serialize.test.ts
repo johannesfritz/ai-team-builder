@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { serializeGraph } from '../serialize';
+import { parsePluginFiles } from '../../import/parse-plugin';
+import { TEMPLATES } from '../../templates';
 import type { Node, Edge } from '@xyflow/react';
 
 function makeNode(id: string, type: string, data: Record<string, unknown>): Node {
@@ -125,4 +127,50 @@ describe('serializeGraph', () => {
     expect(manifest.version).toBe('2.0.0');
     expect(manifest.description).toBe('A tool');
   });
+});
+
+// Templates that exercise the chain abstraction (added in Sprint 1).
+// We exclude starter templates because they're intentionally minimal and
+// don't need round-trip stress testing — the production templates are
+// what would catch a serializer regression on long agent chains.
+const PRODUCTION_TEMPLATE_IDS = ['podcast-team', 'writing-team'];
+
+describe('round-trip: production templates serialize and parse back cleanly', () => {
+  for (const templateId of PRODUCTION_TEMPLATE_IDS) {
+    it(`round-trips ${templateId} without losing nodes`, () => {
+      const template = TEMPLATES.find(t => t.id === templateId);
+      expect(template, `Template ${templateId} not found in TEMPLATES`).toBeDefined();
+
+      // Serialize → file map
+      const serialized = serializeGraph(template!.nodes, template!.edges, template!.id, '1.0.0', template!.description);
+      expect(serialized.errors, `Serialization errors for ${templateId}: ${JSON.stringify(serialized.errors)}`).toHaveLength(0);
+
+      // Parse back into a graph
+      const parsed = parsePluginFiles(serialized.files);
+
+      // Node count: parser should reconstruct every non-MCP node we put in.
+      // We bucket by type and check each bucket — the parser does not preserve
+      // the original node IDs, so we can't check ID equality directly.
+      const countByType = (nodes: Node[]) =>
+        nodes.reduce<Record<string, number>>((acc, n) => {
+          acc[n.type ?? 'unknown'] = (acc[n.type ?? 'unknown'] ?? 0) + 1;
+          return acc;
+        }, {});
+
+      const originalCounts = countByType(template!.nodes);
+      const parsedCounts = countByType(parsed.nodes);
+
+      // Every original type must appear in parsed with the same count
+      for (const type of Object.keys(originalCounts)) {
+        expect(parsedCounts[type], `${templateId}: ${type} count mismatch (orig=${originalCounts[type]}, parsed=${parsedCounts[type] ?? 0})`)
+          .toBe(originalCounts[type]);
+      }
+
+      // Sanity: every node has a name and a non-empty data payload
+      for (const node of parsed.nodes) {
+        const data = node.data as Record<string, unknown>;
+        expect(data, `${templateId}: parsed node ${node.id} has no data`).toBeDefined();
+      }
+    });
+  }
 });

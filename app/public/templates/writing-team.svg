@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" width="720" height="160" role="img" aria-label="Writing referee workflow chain: rule loads, then writing-lead, clarity-editor, fact-checker, steelman, logic-auditor, ending in referee-blog command">
+  <defs>
+    <marker id="wt-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#52525b"/>
+    </marker>
+  </defs>
+  <style>
+    .wt-label { font: 10px ui-sans-serif, system-ui, -apple-system, sans-serif; fill: #fff; }
+    .wt-caption { font: 9px ui-sans-serif, system-ui, -apple-system, sans-serif; fill: #71717a; }
+  </style>
+
+  <!-- Rule (setup) -->
+  <rect x="20" y="20" width="84" height="28" rx="4" fill="#3b82f6"/>
+  <text x="62" y="38" text-anchor="middle" class="wt-label">analytical-balance</text>
+  <text x="62" y="62" text-anchor="middle" class="wt-caption">rule</text>
+
+  <!-- Pipeline agents -->
+  <rect x="20" y="100" width="84" height="28" rx="4" fill="#ef4444"/>
+  <text x="62" y="118" text-anchor="middle" class="wt-label">writing-lead</text>
+
+  <rect x="124" y="100" width="84" height="28" rx="4" fill="#ef4444"/>
+  <text x="166" y="118" text-anchor="middle" class="wt-label">clarity-editor</text>
+
+  <rect x="228" y="100" width="84" height="28" rx="4" fill="#ef4444"/>
+  <text x="270" y="118" text-anchor="middle" class="wt-label">fact-checker</text>
+
+  <rect x="332" y="100" width="84" height="28" rx="4" fill="#ef4444"/>
+  <text x="374" y="118" text-anchor="middle" class="wt-label">steelman</text>
+
+  <rect x="436" y="100" width="84" height="28" rx="4" fill="#ef4444"/>
+  <text x="478" y="118" text-anchor="middle" class="wt-label">logic-auditor</text>
+
+  <!-- Command -->
+  <rect x="540" y="100" width="84" height="28" rx="4" fill="#a855f7"/>
+  <text x="582" y="118" text-anchor="middle" class="wt-label">/referee-blog</text>
+
+  <!-- Pipeline arrows -->
+  <line x1="104" y1="114" x2="124" y2="114" stroke="#52525b" stroke-width="1.5" marker-end="url(#wt-arrow)"/>
+  <line x1="208" y1="114" x2="228" y2="114" stroke="#52525b" stroke-width="1.5" marker-end="url(#wt-arrow)"/>
+  <line x1="312" y1="114" x2="332" y2="114" stroke="#52525b" stroke-width="1.5" marker-end="url(#wt-arrow)"/>
+  <line x1="416" y1="114" x2="436" y2="114" stroke="#52525b" stroke-width="1.5" marker-end="url(#wt-arrow)"/>
+  <line x1="520" y1="114" x2="540" y2="114" stroke="#52525b" stroke-width="1.5" marker-end="url(#wt-arrow)"/>
+
+  <text x="20" y="13" class="wt-caption">SETUP</text>
+  <text x="20" y="93" class="wt-caption">EXECUTE (pipeline)</text>
+  <text x="540" y="93" class="wt-caption">ENTRY</text>
+</svg>
