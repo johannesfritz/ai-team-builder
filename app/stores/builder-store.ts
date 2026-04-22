@@ -11,6 +11,7 @@ import {
   type Connection,
 } from '@xyflow/react';
 import { VALID_CONNECTIONS, NODE_COLORS, type PluginNodeType } from '@/lib/plugin-types';
+import type { RepoConnection } from '@/lib/gitsync/types';
 
 interface PluginMeta {
   name: string;
@@ -51,6 +52,11 @@ interface BuilderState {
   // Load/save
   loadGraph: (nodes: Node[], edges: Edge[]) => void;
   isValidConnection: (connection: Edge | Connection) => boolean;
+
+  // Git Sync: connection to a GitHub repo (optional)
+  connection: RepoConnection | null;
+  setConnection: (c: RepoConnection | null) => void;
+  updateConnectionSha: (sha: string) => void;
 }
 
 const NODE_DEFAULTS: Record<PluginNodeType, Record<string, unknown>> = {
@@ -173,6 +179,14 @@ export const useBuilderStore = create<BuilderState>()(persist((set, get) => ({
     if (!sourceNode || !targetNode) return false;
     return VALID_CONNECTIONS[sourceNode.type as PluginNodeType]?.includes(targetNode.type as PluginNodeType) ?? false;
   },
+
+  connection: null,
+  setConnection: (c) => set({ connection: c }),
+  updateConnectionSha: (sha) => {
+    const current = get().connection;
+    if (!current) return;
+    set({ connection: { ...current, lastFetchedSha: sha, loadedAt: Date.now() } });
+  },
 }),
   {
     name: 'ai-team-builder',
@@ -189,6 +203,7 @@ export const useBuilderStore = create<BuilderState>()(persist((set, get) => ({
       nodes: state.nodes,
       edges: state.edges,
       meta: state.meta,
+      connection: state.connection,
     }),
     onRehydrateStorage: () => {
       return (_state, error) => {
