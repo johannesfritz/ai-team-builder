@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { assetPath } from '@/lib/base-path';
 
 export default function AnatomyPage() {
   return (
@@ -36,7 +37,7 @@ export default function AnatomyPage() {
           <div className="text-xs text-zinc-500 mb-3">Worked example: the Podcast Team template</div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/templates/podcast-team.svg"
+            src={assetPath('/templates/podcast-team.svg')}
             alt="Podcast team workflow chain showing rule, pipeline of agents, and entry command"
             className="min-w-[600px] w-full h-auto"
           />

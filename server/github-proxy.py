@@ -2,12 +2,16 @@
 """GitHub OAuth proxy + Anthropic forwarder for AI Team Builder.
 Runs on Hetzner alongside nginx. Keeps client_secret server-side.
 
-Endpoints:
+Endpoints (as FastAPI sees them, AFTER nginx strips /ai-team-builder/api/):
   GET  /auth/github                - OAuth initiation
   GET  /auth/callback              - OAuth callback
   {POST,PATCH,GET} /github/{path}  - GitHub API proxy (writes + branches)
-  POST /api/anthropic/messages     - Anthropic Messages API forwarder (SSE streaming)
+  POST /anthropic/messages         - Anthropic Messages API forwarder (SSE streaming)
   GET  /health                     - Health check
+
+Browser-facing URLs (through nginx):
+  https://jfritz.xyz/ai-team-builder/api/anthropic/messages
+  https://jfritz.xyz/ai-team-builder/api/github/{path}
 
 The Anthropic forwarder streams responses back to the client via SSE and
 propagates client disconnects to the upstream httpx stream so Anthropic
@@ -189,7 +193,7 @@ async def proxy_github(path: str, request: Request) -> Response:
 # disconnect we close the upstream stream within ~100ms so Anthropic billing
 # stops.
 
-@app.post("/api/anthropic/messages")
+@app.post("/anthropic/messages")
 async def proxy_anthropic_messages(request: Request) -> Response:
     client_ip = request.client.host if request.client else "unknown"
     if not check_anthropic_rate(client_ip):

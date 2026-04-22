@@ -10,6 +10,7 @@ import { parsePluginFiles } from '@/lib/import/parse-plugin';
 import { TEMPLATES } from '@/lib/templates';
 import { useBuilderStore } from '@/stores/builder-store';
 import { useRouter } from 'next/navigation';
+import { assetPath } from '@/lib/base-path';
 
 export default function ShowcasePage() {
   const [plugins, setPlugins] = useState<PluginSummary[]>([]);
@@ -108,7 +109,7 @@ export default function ShowcasePage() {
                   <div className="bg-zinc-950 border border-zinc-800 rounded p-2 mb-4 overflow-x-auto">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`/templates/${template.id}.svg`}
+                      src={assetPath(`/templates/${template.id}.svg`)}
                       alt={`${template.name} workflow chain diagram`}
                       className="min-w-[600px] w-full h-auto"
                     />
