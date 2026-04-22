@@ -8,7 +8,8 @@ import { BuilderCanvas } from '@/components/builder/Canvas';
 import { PropertyPanel } from '@/components/builder/PropertyPanel';
 import { DryRunPanel } from '@/components/builder/DryRun';
 import { LivePreview } from '@/components/builder/LivePreview';
-import { StubbedLiveTest } from '@/components/builder/StubbedLiveTest';
+import { LiveTest } from '@/components/builder/LiveTest';
+import { SaveToRepo } from '@/components/builder/SaveToRepo';
 import { Toolbar } from '@/components/builder/Toolbar';
 import { CommandPalette } from '@/components/builder/CommandPalette';
 import { useBuilderStore } from '@/stores/builder-store';
@@ -143,12 +144,16 @@ function BuilderWithParams() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-200">
+    <div id="builder-root" className="flex h-screen bg-zinc-950 text-zinc-200">
       <Toolbar onShowDryRun={() => setRightPanel('dryrun')} />
       <CommandPalette onExport={handleCmdExport} onImport={handleCmdImport} onShare={handleCmdShare} />
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Save-to-repo header (only when connected) */}
+        <div className="flex items-center justify-end px-4 py-1.5 border-b border-zinc-800 shrink-0 min-h-[36px]">
+          <SaveToRepo />
+        </div>
         {/* View toggle */}
         <div className="flex border-b border-zinc-800 shrink-0">
           <button
@@ -182,18 +187,15 @@ function BuilderWithParams() {
             Canvas
           </button>
           <button
-            className={`px-4 py-2.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2.5 text-xs font-medium transition-colors ${
               mainView === 'livetest'
-                ? 'text-zinc-200 border-b-2 border-amber-500 bg-zinc-900/50'
+                ? 'text-zinc-200 border-b-2 border-emerald-500 bg-zinc-900/50'
                 : 'text-zinc-500 hover:text-zinc-400'
             }`}
             onClick={() => setMainView('livetest')}
-            title="Preview the planned Live Test feature with pre-recorded outputs"
+            title="Run a prompt through your workflow live against your Anthropic API key"
           >
             Live Test
-            <span className="text-[9px] text-amber-500 border border-amber-700 rounded px-1 leading-tight">
-              DEMO
-            </span>
           </button>
         </div>
 
@@ -202,7 +204,7 @@ function BuilderWithParams() {
           {mainView === 'setup' && <TeamSetupView />}
           {mainView === 'workflow' && <WorkflowView />}
           {mainView === 'canvas' && <BuilderCanvas />}
-          {mainView === 'livetest' && <StubbedLiveTest />}
+          {mainView === 'livetest' && <LiveTest />}
         </div>
       </div>
 
