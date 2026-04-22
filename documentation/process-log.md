@@ -7,9 +7,7 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**SPRINTS 1-4 ALL SHIPPED TO GITHUB. AWAITING DEPLOY.** All four sprints of the approved roadmap are now in code on main: production templates + agent-chain edge fix (Sprint 1), design docs for Sprint 3 + Sprint 4 (Sprint 2 office-hours), real BYOK Live Test via proxy-routed SSE (Sprint 3), Git Sync via atomic Git Data API saves with conflict modal and Connect repo dialog (Sprint 4). 171 tests pass, TypeScript clean, production build clean.
-
-**Held for deploy:** proxy changes to `server/github-proxy.py` need Hetzner deployment (backup + dry-run rsync + systemd restart + smoke-test). Frontend static export needs `dist/` sync. nginx config needs `proxy_buffering off` for `/ai-team-builder/api/anthropic/` to stream properly.
+**SPRINTS 1-4 LIVE ON jfritz.xyz. LIVE TEST VERIFIED END-TO-END.** Real BYOK execution against the user's Anthropic key ran the full 7-agent podcast pipeline in ~3 minutes for $0.23 with vanilla baseline running in parallel. Each step shows input received, system prompt, streamed output, and token/cost/duration stats — the within-workflow hardening visibility is live. Git Sync proxy + UI shipped but end-to-end test against a real GitHub repo waits for the user to OAuth + nominate a test repo.
 
 ## Log
 
@@ -438,6 +436,8 @@ Built and pushed both sprints to GitHub in a single session. All implementation 
 - OAuth proxy mapped for Sprint 3 (Anthropic CORS forwarder at `POST /api/anthropic/messages` with SSE streaming) and Sprint 4 (GitHub Contents + Git Data API writes — no scope changes needed, `repo` already present).
 
 **Next:** push to GitHub (pending user confirmation), then review the two draft design docs and run the Sprint 2 `/office-hours` session. Deploy to `jfritz.xyz/ai-team-builder` held for user approval.
+
+## (See 2026-04-22 entry below for Sprint 1 thru Sprint 4 deploy + production verification)
 
 ## Backlog
 
