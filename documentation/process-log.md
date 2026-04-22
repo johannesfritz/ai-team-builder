@@ -7,7 +7,7 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**ALL PHASES COMPLETE.** CEO + Eng reviews CLEARED. Phases 1-4 implemented. 94 tests passing. Shareable URLs, live preview, fork gallery, health score, Cmd+K palette, MCPB export all built. Pending: deploy to production, Gist fallback for large plugins, Hetzner proxy for GitHub OAuth.
+**SPRINT 1 SHIPPED, SPRINT 2 DESIGN APPROVED.** Edge fix, production templates (podcast-team, writing-team), showcase with SVG diagrams, Workflow Anatomy docs, and stubbed Live Test demo all landed in 5 commits on main (102 tests pass). Sprint 2 office-hours produced two approved design docs (Live Test, Git Sync) after 2 rounds of adversarial review each — both 9/10. Sprint 3 (Live Test implementation) and Sprint 4 (Git Sync implementation) are ready to start.
 
 ## Log
 
@@ -364,6 +364,23 @@
   - Sprint 3 (~2-3 wks): implement Live Test (real BYOK execution, replaces stubbed demo).
   - Sprint 4 (~1-2 wks): implement Git Sync (browser-only via existing OAuth proxy).
 - **Next:** start Sprint 1 (or route to `/plan-eng-review` for architecture pass on `derive.ts` phase classification with long agent chains).
+
+## 2026-04-22 — Sprint 2 office-hours: Live Test + Git Sync designs APPROVED (Linear: JCC-489)
+
+Reviewed the two draft design docs produced in parallel during Sprint 1 work. Both came in at 6/10 from first-pass adversarial review — not because the core architecture was wrong, but because critical implementation details were hand-waved. Fixed all flagged issues, re-reviewed, both now at 9/10 APPROVE.
+
+**Live Test (Sprint 3) — APPROVED at `~/.gstack/projects/johannesfritz-ai-team-builder/johannesfritz-main-livetest-design-20260422.md`**
+- Core architecture: Approach A (proxy-routed BYOK). Extend `server/github-proxy.py` with `POST /api/anthropic/messages` streaming SSE from Anthropic's `/v1/messages`. API key in per-request `X-Anthropic-Key` header.
+- Critical fixes from review: (a) cache invalidation now walks transitive descendants in the DAG (not "all index > N", which was wrong for parallel branches), (b) SSE cancellation wires `AbortController` → proxy `request.is_disconnected()` → upstream `httpx` stream close within 100ms of cancel (stops Anthropic billing on cancel), (c) nginx `proxy_buffering off` + `X-Accel-Buffering: no` for SSE, (d) step-input contract spelled out (convergence concat rule, SHA-256 16-char hash, single-turn `messages` array), (e) pricing constants dated 2026-04-22 with 2000 default output budget + per-step override + ±20% honest accuracy disclaimer, (f) baseline payload defined (empty system, user-only message, same model as first agent, concurrent with first workflow step).
+- Scope cuts: diff view gold-plating, auto-retry with exponential backoff (single manual retry in v1), `@anthropic-ai/sdk` client dep (raw fetch + Web Streams API only).
+
+**Git Sync (Sprint 4) — APPROVED at `~/.gstack/projects/johannesfritz-ai-team-builder/johannesfritz-main-gitsync-design-20260422.md`**
+- Core architecture: Approach B (Git Data API, atomic). 5-step sequence (refs GET → commits GET → trees POST → commits POST → refs PATCH). Steps 1-2 direct-from-browser; steps 3-5 routed through proxy for audit. Per-save proxy cost: 3 calls (not 5 — rate limit math fixed).
+- Critical fixes from review: (a) tree payload must be diff-only with `base_tree` carrying unchanged files forward, (b) deletions require explicit `sha: null` entries, (c) `pluginRoot` prefix applied to every file path on save (`joinPath(connection.pluginRoot, serializerOutputPath)`), (d) rate limit math corrected — reads de-proxied drops save to 3 proxy calls, per-IP limit raised to 300/hr, (e) debounced dirty counter (200ms) + fast `isDirty` boolean for instant Save-button enablement on large plugins, (f) Live Test → Save bridge wires through the canonical `useBuilderStore.getState().updateNodeData(...)` mutator (same path PropertyPanel uses, so Sprint 4 dirty-tracking picks up Live Test edits automatically).
+- Scope cuts: GitHub auto-save toggle (no settings panel), user-editable commit message input (YAGNI), Contents API proxy path (Git Data API only in v1).
+- Defaults locked: branch name `atb/{yyyymmdd}`, protection banner "may fail" not "will fail" with `permissions.push` check to downgrade to informational, naive filename-based commit auto-summary (not content-aware), drafts cleared immediately on save, `lastFetchedSha` updates on save and Refresh.
+
+**Next:** implement Sprint 3 (Live Test) per approved design — estimate human ~2-3 weeks, CC ~2-3 days. Sprint 4 (Git Sync) follows, ~1-2 weeks human / ~1-2 days CC.
 
 ## 2026-04-22 — Sprint 1 complete (Linear: JCC-483)
 
