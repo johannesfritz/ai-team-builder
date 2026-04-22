@@ -11,6 +11,10 @@ export type StepStatus = 'idle' | 'queued' | 'streaming' | 'done' | 'error' | 's
 
 export interface StepRunState {
   status: StepStatus;
+  /** The text input the agent received (output of upstream agent OR user prompt for root) */
+  inputUsed: string;
+  /** The agent's system prompt at the time of the run */
+  systemPromptUsed: string;
   outputBuffer: string;
   inputUsedHash: string | null;
   promptHash: string | null;
@@ -25,6 +29,8 @@ export interface StepRunState {
 export function emptyStepState(): StepRunState {
   return {
     status: 'idle',
+    inputUsed: '',
+    systemPromptUsed: '',
     outputBuffer: '',
     inputUsedHash: null,
     promptHash: null,
@@ -57,6 +63,10 @@ export interface LiveTestActions {
   setStepState: (id: string, patch: Partial<StepRunState>) => void;
   setStepStates: (patch: Record<string, Partial<StepRunState>>) => void;
   setVanillaState: (patch: Partial<StepRunState>) => void;
+  /** Atomic append to a step's outputBuffer — safe under rapid streaming deltas. */
+  appendStepOutput: (id: string, text: string) => void;
+  /** Atomic append to vanilla baseline outputBuffer. */
+  appendVanillaOutput: (text: string) => void;
   startRun: (runId: string) => void;
   completeRun: (outcome: 'idle' | 'cancelled' | 'error') => void;
   resetStepStates: () => void;
@@ -109,6 +119,24 @@ export const useLiveTestStore = create<LiveTestState & LiveTestActions>((set, ge
   }),
 
   setVanillaState: (patch) => set(s => ({ vanillaState: { ...s.vanillaState, ...patch } })),
+
+  // Atomic appends — read-and-write happen inside the same set callback so
+  // rapid streaming deltas don't clobber each other (a real bug discovered
+  // during the prod end-to-end test on 2026-04-22 — the previous "read state,
+  // then setState" pattern lost token deltas under burst streaming).
+  appendStepOutput: (id, text) => set(s => {
+    const cur = s.stepStates[id] ?? emptyStepState();
+    return {
+      stepStates: {
+        ...s.stepStates,
+        [id]: { ...cur, outputBuffer: cur.outputBuffer + text },
+      },
+    };
+  }),
+
+  appendVanillaOutput: (text) => set(s => ({
+    vanillaState: { ...s.vanillaState, outputBuffer: s.vanillaState.outputBuffer + text },
+  })),
 
   startRun: (runId) => set({ runId, globalStatus: 'running' }),
 

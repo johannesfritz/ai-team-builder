@@ -58,17 +58,27 @@ export async function consumeAnthropicStream(
   const reader = body.getReader();
   const decoder = new TextDecoder('utf-8');
   let buffer = '';
+  let chunkCount = 0;
+  let recordCount = 0;
   try {
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      if (done) {
+        if (typeof console !== 'undefined') console.debug(`[livetest sse] stream done. chunks=${chunkCount} records=${recordCount} buffer-tail=${JSON.stringify(buffer.slice(0, 80))}`);
+        break;
+      }
+      chunkCount++;
+      const decoded = decoder.decode(value, { stream: true });
+      buffer += decoded;
+      if (typeof console !== 'undefined' && chunkCount === 1) console.debug(`[livetest sse] first chunk ${decoded.length}B starts with`, decoded.slice(0, 80));
       let nlIdx: number;
       while ((nlIdx = buffer.indexOf('\n\n')) !== -1) {
         const record = buffer.slice(0, nlIdx);
         buffer = buffer.slice(nlIdx + 2);
         const parsed = parseSseRecord(record);
         if (!parsed) continue;
+        recordCount++;
+        if (typeof console !== 'undefined' && recordCount <= 3) console.debug(`[livetest sse] record #${recordCount} event=${parsed.event}`);
         dispatch(parsed, handlers);
       }
     }

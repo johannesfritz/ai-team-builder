@@ -11,7 +11,7 @@
 import type { Edge, Node } from '@xyflow/react';
 import { consumeAnthropicStream } from './sse';
 import { buildStepInput } from './input';
-import { DEFAULT_OUTPUT_BUDGET, computeCost } from '../anthropic/pricing';
+import { DEFAULT_OUTPUT_BUDGET, computeCost, resolveModel } from '../anthropic/pricing';
 
 export const PROXY_ANTHROPIC_ENDPOINT = '/ai-team-builder/api/anthropic/messages';
 
@@ -77,7 +77,7 @@ export async function runStep(opts: RunStepOptions, callbacks: StepRunCallbacks)
         'X-Anthropic-Key': apiKey,
       },
       body: JSON.stringify({
-        model,
+        model: resolveModel(model),
         system: systemPrompt,
         messages: [{ role: 'user', content: userInput }],
         stream: true,
@@ -118,7 +118,7 @@ export async function runStep(opts: RunStepOptions, callbacks: StepRunCallbacks)
           inputTokens,
           outputTokens,
           durationMs: Date.now() - startedAt,
-          costUsd: computeCost({ model, inputTokens, outputTokens }),
+          costUsd: computeCost({ model: resolveModel(model), inputTokens, outputTokens }),
         });
       },
       onError: (err) => {

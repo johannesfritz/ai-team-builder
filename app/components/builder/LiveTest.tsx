@@ -49,8 +49,9 @@ export function LiveTest() {
   const { nodes, edges } = useBuilderStore();
   const {
     apiKey, apiKeyPersisted, prompt, showVanilla, vanillaState, stepStates,
-    runId, globalStatus, bannerDismissed,
+    globalStatus, bannerDismissed,
     setApiKey, forgetApiKey, setPrompt, setShowVanilla, setStepState, setVanillaState,
+    appendStepOutput, appendVanillaOutput,
     startRun, completeRun, resetStepStates, dismissBanner, hydrateFromStorage, subscribeStorageEvents,
   } = useLiveTestStore();
 
@@ -132,7 +133,7 @@ export function LiveTest() {
 
     // Kick off the vanilla baseline in parallel with first step
     if (showVanilla) {
-      setVanillaState({ ...emptyStepState(), status: 'streaming', startedAt: Date.now() });
+      setVanillaState({ ...emptyStepState(), status: 'streaming', inputUsed: prompt, systemPromptUsed: '', startedAt: Date.now() });
       runStep({
         apiKey,
         model: firstModel,
@@ -141,7 +142,7 @@ export function LiveTest() {
         signal: controller.signal,
       }, {
         onTextDelta: (t) => {
-          setVanillaState({ outputBuffer: (useLiveTestStore.getState().vanillaState.outputBuffer ?? '') + t });
+          appendVanillaOutput(t);
         },
         onFinal: (final) => {
           setVanillaState({
@@ -178,6 +179,8 @@ export function LiveTest() {
       setStepState(stepId, {
         ...emptyStepState(),
         status: 'streaming',
+        inputUsed: input,
+        systemPromptUsed: d.systemPrompt ?? '',
         promptHash,
         inputUsedHash,
         startedAt: Date.now(),
@@ -193,8 +196,7 @@ export function LiveTest() {
         signal: controller.signal,
       }, {
         onTextDelta: (t) => {
-          const cur = useLiveTestStore.getState().stepStates[stepId] ?? emptyStepState();
-          setStepState(stepId, { outputBuffer: cur.outputBuffer + t });
+          appendStepOutput(stepId, t);
         },
         onFinal: (final) => {
           finalized = true;
@@ -229,7 +231,7 @@ export function LiveTest() {
     completeRun('idle');
     abortRef.current = null;
   }, [apiKey, orderedStepNodes, orderedStepIds, nodes, edges, prompt, showVanilla, firstModel,
-    resetStepStates, startRun, setStepState, setVanillaState, completeRun]);
+    resetStepStates, startRun, setStepState, setVanillaState, appendStepOutput, appendVanillaOutput, completeRun]);
 
   const handleCancel = useCallback(() => {
     abortRef.current?.abort();
@@ -290,6 +292,8 @@ export function LiveTest() {
       setStepState(stepId, {
         ...emptyStepState(),
         status: 'streaming',
+        inputUsed: input,
+        systemPromptUsed: d.systemPrompt ?? '',
         promptHash,
         inputUsedHash,
         startedAt: Date.now(),
@@ -305,8 +309,7 @@ export function LiveTest() {
         signal: controller.signal,
       }, {
         onTextDelta: (t) => {
-          const cur = useLiveTestStore.getState().stepStates[stepId] ?? emptyStepState();
-          setStepState(stepId, { outputBuffer: cur.outputBuffer + t });
+          appendStepOutput(stepId, t);
         },
         onFinal: (final) => {
           finalized = true;
@@ -339,7 +342,7 @@ export function LiveTest() {
 
     completeRun('idle');
     abortRef.current = null;
-  }, [apiKey, nodes, edges, prompt, orderedStepIds, startRun, setStepState, completeRun]);
+  }, [apiKey, nodes, edges, prompt, orderedStepIds, startRun, setStepState, appendStepOutput, completeRun]);
 
   // Empty states
   if (!selectedCommandId) {
@@ -512,18 +515,47 @@ export function LiveTest() {
                 {(state.status !== 'idle' || isEditing) && (
                   <div className="p-4 space-y-3">
                     {!isEditing && state.status !== 'idle' && (
-                      <div>
-                        <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Output</div>
-                        <pre className="text-[11px] text-emerald-300 font-mono whitespace-pre-wrap leading-relaxed max-h-[320px] overflow-y-auto">
-                          {state.outputBuffer}
-                          {state.status === 'streaming' && <span className="animate-pulse">▊</span>}
-                        </pre>
-                        {state.status === 'error' && state.error && (
-                          <div className="mt-2 text-xs text-amber-400">
-                            <strong>{state.error.kind}:</strong> {state.error.message}
-                          </div>
+                      <>
+                        {/* INPUT — what arrived at this agent */}
+                        {state.inputUsed && (
+                          <details className="group">
+                            <summary className="cursor-pointer text-[10px] text-zinc-500 uppercase tracking-wider mb-1 hover:text-zinc-300">
+                              Input received <span className="text-zinc-600 normal-case ml-1">({state.inputUsed.length.toLocaleString()} chars from {i === 0 ? 'user prompt' : `step ${i}`})</span>
+                            </summary>
+                            <pre className="mt-1 text-[11px] text-sky-300 font-mono whitespace-pre-wrap leading-relaxed max-h-[200px] overflow-y-auto bg-zinc-950/60 p-2 rounded border border-zinc-800">
+                              {state.inputUsed}
+                            </pre>
+                          </details>
                         )}
-                      </div>
+
+                        {/* SYSTEM PROMPT — what shaped this agent's behavior */}
+                        {state.systemPromptUsed && (
+                          <details className="group">
+                            <summary className="cursor-pointer text-[10px] text-zinc-500 uppercase tracking-wider mb-1 hover:text-zinc-300">
+                              System prompt <span className="text-zinc-600 normal-case ml-1">({state.systemPromptUsed.length.toLocaleString()} chars · click Edit to modify)</span>
+                            </summary>
+                            <pre className="mt-1 text-[11px] text-violet-300 font-mono whitespace-pre-wrap leading-relaxed max-h-[200px] overflow-y-auto bg-zinc-950/60 p-2 rounded border border-zinc-800">
+                              {state.systemPromptUsed}
+                            </pre>
+                          </details>
+                        )}
+
+                        {/* OUTPUT — what this agent produced */}
+                        <div>
+                          <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">
+                            Output <span className="text-zinc-600 normal-case ml-1">({state.outputBuffer.length.toLocaleString()} chars{i < orderedStepNodes.length - 1 ? ` · passed to step ${i + 2}` : ''})</span>
+                          </div>
+                          <pre className="text-[11px] text-emerald-300 font-mono whitespace-pre-wrap leading-relaxed max-h-[320px] overflow-y-auto">
+                            {state.outputBuffer}
+                            {state.status === 'streaming' && <span className="animate-pulse">▊</span>}
+                          </pre>
+                          {state.status === 'error' && state.error && (
+                            <div className="mt-2 text-xs text-amber-400">
+                              <strong>{state.error.kind}:</strong> {state.error.message}
+                            </div>
+                          )}
+                        </div>
+                      </>
                     )}
                     {isEditing && (
                       <div>

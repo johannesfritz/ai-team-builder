@@ -251,6 +251,11 @@ async def proxy_anthropic_messages(request: Request) -> Response:
                     "anthropic-version": ANTHROPIC_VERSION,
                     "Content-Type": "application/json",
                     "Accept": "text/event-stream",
+                    # CRITICAL: httpx defaults to Accept-Encoding: gzip,deflate which
+                    # makes Anthropic return gzipped bytes. Since we forward raw bytes
+                    # via aiter_raw() without a Content-Encoding header, the browser
+                    # can't decompress them and the SSE parser fails. Pin to identity.
+                    "Accept-Encoding": "identity",
                 },
             ) as resp:
                 # If Anthropic returned a non-200, propagate the body as a single

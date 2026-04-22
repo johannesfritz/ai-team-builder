@@ -25,6 +25,28 @@ export const PRICING_USD_PER_MTOK: Record<string, ModelPricing> = {
 // Default max_tokens per step when the agent node does not specify one.
 export const DEFAULT_OUTPUT_BUDGET = 2000;
 
+/**
+ * Map Claude Code shorthand aliases to canonical Anthropic API model IDs.
+ * Templates often use 'haiku' / 'sonnet' / 'opus' which Claude Code accepts
+ * as aliases but the Anthropic Messages API does not.
+ *
+ * Verified against current Anthropic model catalog 2026-04-22.
+ */
+export const MODEL_ALIASES: Record<string, string> = {
+  haiku: 'claude-haiku-4-5',
+  sonnet: 'claude-sonnet-4-5',
+  opus: 'claude-opus-4-5',
+  inherit: 'claude-sonnet-4-5',
+};
+
+/**
+ * Resolve a possibly-aliased model name to a canonical Anthropic API model ID.
+ * Returns the input unchanged if it's already a canonical ID.
+ */
+export function resolveModel(model: string): string {
+  return MODEL_ALIASES[model] ?? model;
+}
+
 export interface CostInput {
   model: string;
   inputTokens: number;
