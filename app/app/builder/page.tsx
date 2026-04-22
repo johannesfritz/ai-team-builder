@@ -8,6 +8,7 @@ import { BuilderCanvas } from '@/components/builder/Canvas';
 import { PropertyPanel } from '@/components/builder/PropertyPanel';
 import { DryRunPanel } from '@/components/builder/DryRun';
 import { LivePreview } from '@/components/builder/LivePreview';
+import { StubbedLiveTest } from '@/components/builder/StubbedLiveTest';
 import { Toolbar } from '@/components/builder/Toolbar';
 import { CommandPalette } from '@/components/builder/CommandPalette';
 import { useBuilderStore } from '@/stores/builder-store';
@@ -17,7 +18,7 @@ import { encodeShareURL, decodeShareURL } from '@/lib/share';
 import { getGitHubToken, setGitHubToken } from '@/lib/github-auth';
 import { toast } from '@/lib/toast';
 
-type MainView = 'setup' | 'workflow' | 'canvas';
+type MainView = 'setup' | 'workflow' | 'canvas' | 'livetest';
 type RightPanel = 'properties' | 'dryrun' | 'preview';
 
 function BuilderWithParams() {
@@ -82,6 +83,7 @@ function BuilderWithParams() {
       if (e.key === '1' && !e.metaKey && !e.ctrlKey) setMainView('setup');
       if (e.key === '2' && !e.metaKey && !e.ctrlKey) setMainView('workflow');
       if (e.key === '3' && !e.metaKey && !e.ctrlKey) setMainView('canvas');
+      if (e.key === '4' && !e.metaKey && !e.ctrlKey) setMainView('livetest');
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -179,6 +181,20 @@ function BuilderWithParams() {
           >
             Canvas
           </button>
+          <button
+            className={`px-4 py-2.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              mainView === 'livetest'
+                ? 'text-zinc-200 border-b-2 border-amber-500 bg-zinc-900/50'
+                : 'text-zinc-500 hover:text-zinc-400'
+            }`}
+            onClick={() => setMainView('livetest')}
+            title="Preview the planned Live Test feature with pre-recorded outputs"
+          >
+            Live Test
+            <span className="text-[9px] text-amber-500 border border-amber-700 rounded px-1 leading-tight">
+              DEMO
+            </span>
+          </button>
         </div>
 
         {/* View content */}
@@ -186,6 +202,7 @@ function BuilderWithParams() {
           {mainView === 'setup' && <TeamSetupView />}
           {mainView === 'workflow' && <WorkflowView />}
           {mainView === 'canvas' && <BuilderCanvas />}
+          {mainView === 'livetest' && <StubbedLiveTest />}
         </div>
       </div>
 

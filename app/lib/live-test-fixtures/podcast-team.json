@@ -1,0 +1,68 @@
+{
+  "templateId": "podcast-team",
+  "samplePrompt": "The latest IAEA report on Iran's enrichment capacity at Natanz documents 60% HEU stockpiles up 32 kg in the last quarter, while diplomatic backchannels in Doha report renewed interest from Tehran in a phased sanctions-relief track. European foreign ministers will meet in Brussels next Tuesday to coordinate position on the JCPOA framework. Convert this briefing into a 3-minute analytical podcast for the Iran Conflict Monitor.",
+  "vanillaResponse": "Here is a 3-minute analytical podcast script on Iran's nuclear program and diplomatic outreach: The IAEA reported a 32 kg increase in 60% enriched uranium at Natanz, raising concerns about Iran's nuclear capacity. Meanwhile, diplomatic sources in Doha indicate renewed Iranian interest in sanctions relief negotiations. European foreign ministers will discuss the JCPOA framework at a meeting in Brussels next Tuesday. This combination of expanding nuclear capacity and renewed diplomatic engagement creates an interesting strategic moment for the international community to consider its options regarding the Iranian nuclear program.\n\n[Note: vanilla Claude produces a rough script — no pronunciation guidance, no length validation, no fact-checking, no audio considerations.]",
+  "steps": [
+    {
+      "agentName": "content-analyst",
+      "model": "haiku",
+      "input": "[Source briefing: IAEA Natanz report + Doha diplomatic backchannels + Brussels JCPOA meeting]",
+      "systemPromptExcerpt": "Extract key themes and content structure from analytical markdown. Read source completely; identify developments, probability changes, critical sources, and new proper nouns. Select top 3-5 developments...",
+      "output": "{\n  \"themes\": [\n    \"Iran nuclear capacity expansion (60% HEU +32kg)\",\n    \"Diplomatic backchannel revival (Doha → JCPOA)\",\n    \"European coordination meeting (Brussels Tuesday)\"\n  ],\n  \"new_proper_nouns\": [\n    \"Natanz (NAT-anz)\",\n    \"JCPOA (jay-see-POH-ah)\",\n    \"Doha (DOH-hah)\"\n  ],\n  \"recommended_format\": \"briefing\",\n  \"target_word_count\": 450,\n  \"primary_focus\": \"capacity-vs-diplomacy paradox\"\n}",
+      "tokens": { "input": 824, "output": 156 },
+      "durationMs": 1840
+    },
+    {
+      "agentName": "script-writer",
+      "model": "opus",
+      "input": "Themes + lexicon + 450-word briefing template",
+      "systemPromptExcerpt": "Convert structured content analysis into spoken-word podcast scripts. Sentences under 25 words, active voice, contractions, spelled-out numbers, pronunciation guides on first mention of non-English proper nouns...",
+      "output": "[OPENING - 30s]\nTwo signals from Iran this week, pointing different directions.\n\n[BODY - 2:00]\nFirst, the nuclear file. The International Atomic Energy Agency reports Iran added thirty-two kilograms of sixty-percent enriched uranium at Natanz, pronounced NAT-anz, in the last quarter. That is the highest stockpile growth rate in fourteen months.\n\nSecond, the diplomatic file. Backchannels in Doha, pronounced DOH-hah, suggest Tehran has renewed interest in a phased sanctions-relief track. European foreign ministers meet in Brussels next Tuesday to coordinate position on the JCPOA, pronounced jay-see-POH-ah, framework.\n\nThe paradox is the story. Capacity expands while diplomacy reopens. [PAUSE: 0.5s]\n\n[CLOSE - 30s]\nWhich signal matters more is what next Tuesday will tell us. From the Iran Conflict Monitor, this is your weekly briefing.",
+      "tokens": { "input": 312, "output": 487 },
+      "durationMs": 4220
+    },
+    {
+      "agentName": "script-reviewer",
+      "model": "sonnet",
+      "input": "First-draft script + source briefing for cross-reference",
+      "systemPromptExcerpt": "Run 2-3 rounds of critique and revision. Round 1: pacing. Round 2: hard rules (sentences <25 words, active voice). Round 3: polish transitions...",
+      "output": "Round 1 (pacing): word count 463, target 450 ±5%, PASS.\nRound 2 (hard rules):\n  - Sentence count >25 words: 0 violations.\n  - Passive voice: 0 violations.\n  - Numbers spelled out: PASS (32 → thirty-two, 60% → sixty-percent).\n  - Pronunciation guides: PASS (Natanz, Doha, JCPOA all guided on first mention).\nRound 3 (transitions): 'The paradox is the story' lands. No further edits.\n\nVerdict: APPROVED for voice production.",
+      "tokens": { "input": 612, "output": 138 },
+      "durationMs": 2960
+    },
+    {
+      "agentName": "podcast-fact-checker",
+      "model": "sonnet",
+      "input": "Script + source briefing + parallel access to script-writer's draft",
+      "systemPromptExcerpt": "Verify every factual claim against three evidence tiers. Tier 1: monitor's own history. Tier 2: source assessment. Tier 3: independent verification (Reuters, AP, IRNA, Fars News)...",
+      "output": "FACT CHECK: 4 verifiable claims.\n  ✓ '32 kg HEU increase' — matches IAEA quarterly report (source).\n  ✓ '60% enriched uranium at Natanz' — confirmed AP, Reuters.\n  ⚠ '14-month high stockpile growth rate' — source briefing implies but does not state. RECOMMEND: soften to 'highest in over a year' OR add citation.\n  ✓ 'European FMs meet in Brussels Tuesday' — confirmed via EEAS schedule.\n\nIMPARTIALITY: 'paradox' framing is neutral. No suggested rewording.\n\nVerdict: PASS WITH ONE EDIT (soften 14-month claim).",
+      "tokens": { "input": 612, "output": 162 },
+      "durationMs": 5180
+    },
+    {
+      "agentName": "voice-producer",
+      "model": "sonnet",
+      "input": "Approved script + voice profile (alloy for briefing register)",
+      "systemPromptExcerpt": "Manage TTS generation. Preprocess for pronunciation accuracy. Select voices by episode type. Validate output: file >10KB, duration matches word count ÷ 135 WPM...",
+      "output": "Preprocessing:\n  - Removed [PAUSE: 0.5s] markers, replaced with ellipsis.\n  - Stripped section headers ([OPENING], [BODY], [CLOSE]).\n  - Inline pronunciations preserved.\nTTS provider: OpenAI tts-1-hd, voice: alloy.\nGeneration: single-pass (script <4096 chars).\nOutput: raw.wav (1.8 MB, duration 178.4s, expected 200s ±10%, PASS).",
+      "tokens": { "input": 487, "output": 94 },
+      "durationMs": 12400
+    },
+    {
+      "agentName": "audio-engineer",
+      "model": "sonnet",
+      "input": "raw.wav (1.8 MB, 178.4s)",
+      "systemPromptExcerpt": "Process raw TTS into distribution-ready audio. ARCHIVE raw.wav before processing. Loudness normalisation (ffmpeg-normalize, -16 LUFS ±1, -1.0 dBTP). MP3 export 96 kbps CBR, 44.1 kHz, mono...",
+      "output": "Archived: archive/raw-20260422-101647.wav.\nProcessing chain:\n  1. Highpass 80Hz (rumble removal).\n  2. Warmth boost +1dB at 200Hz.\n  3. Mud reduction -2dB at 400Hz.\n  4. Presence boost +1.5dB at 3kHz.\n  5. HF rolloff -3dB above 12kHz.\n  6. ffmpeg-normalize: -16.0 LUFS, -1.0 dBTP true peak.\n  7. MP3 export: 96 kbps CBR, 44100 Hz, mono.\n  8. ID3v2.3 metadata embedded.\nOutput: final.mp3 (2.1 MB, 178.4s).",
+      "tokens": { "input": 0, "output": 0 },
+      "durationMs": 8200
+    },
+    {
+      "agentName": "qa-reviewer",
+      "model": "sonnet",
+      "input": "final.mp3 + source script for STT comparison",
+      "systemPromptExcerpt": "5-layer QA. L1 (BLOCKING): loudness compliance. L2 (BLOCKING): duration. L3 (WARNING): silence. L4 (WARNING): content via Whisper STT. L5 (WARNING): encoding...",
+      "output": "Layer 1 (loudness): -16.1 LUFS, -1.0 dBTP. PASS.\nLayer 2 (duration): 178.4s, briefing target 180s ±10%. PASS.\nLayer 3 (silence): no gaps >3s. PASS.\nLayer 4 (Whisper STT): 97.2% similarity to script (4 minor numerical transcription differences, acceptable). PASS.\nLayer 5 (encoding): mp3, 96 kbps CBR, 44100 Hz, mono, ID3v2.3. PASS.\n\nFinal verdict: ALL LAYERS PASS. Episode ready for distribution."
+    }
+  ]
+}
