@@ -328,6 +328,66 @@
 - **Key insight from gstack:** Process beats tooling. Sprint workflow (Think→Plan→Build→Review→Test→Ship) is what makes parallel agents effective.
 - **Key insight from autoresearch:** Fixed-budget iteration with keep/discard and "NEVER STOP" enables autonomous overnight work.
 
+## 2026-04-22 — Office hours: revise examples + sequence live-test and git sync
+
+**Session:** `/office-hours` (Linear: JCC-477)
+**Mode:** Builder (open source / community-facing)
+
+- **Context found during investigation:**
+  - Workflow page (`WorkflowView.tsx` + `WorkflowStep.tsx`) already renders a Gantt-style vertical timeline with phase grouping (Setup → Trigger → Execute → Entry). Right shape; the issue is templates undersell it.
+  - Current 5 templates in `templates.ts` are all 1-4 nodes. None exercise the chain abstraction.
+  - **Hidden blocker:** `VALID_CONNECTIONS` in `app/lib/plugin-types.ts:55-62` forbids `agent → agent` edges. The cc-podcast-team pipeline (`script-writer → script-reviewer → voice-producer → audio-engineer`) literally cannot be drawn today.
+  - `DryRun.tsx` is a structural simulator only (which hooks fire, which rules load). Not a prompt executor.
+  - `LivePreview.tsx` is misnamed — it's a code export preview.
+  - App is a static export with the existing GitHub OAuth proxy (commit 2a41f67) as the only backend.
+
+- **Decisions:**
+  - User chose "Design first, then commit" scope and "Open source / community-facing" mode.
+  - Design doc APPROVED after 2 rounds of adversarial review (final 9/10).
+  - Path: `~/.gstack/projects/johannesfritz-ai-team-builder/johannesfritz-main-design-20260422-091300.md`
+
+- **Sprint plan locked:**
+  - Sprint 1 (~5-6 hr CC): lift `agent → agent` and `agent → command` edges, 4 enumerated tests, port `cc-podcast-team` (10 nodes) and `cc-writing-team` (7 nodes) as templates, delete 3 old templates + keep 2 starters with `Starter:` prefix, update showcase with SVG chain diagrams, add `app/app/docs/anatomy/page.tsx`.
+  - Sprint 2: joint office-hours design for Git Sync + Live Test (share state-model questions).
+  - Sprint 3 (~1-2 wks): implement Git Sync (browser-only, extend existing OAuth proxy).
+  - Sprint 4 (~2-3 wks): implement Live Test (Approach A: BYOK browser-side Anthropic with CORS via OAuth proxy).
+
+- **Flagged for Sprint 2 design pass:** CORS path for browser→Anthropic (proxy vs. dangerous-direct header), cache invalidation on mid-flight prompt edit, atomic vs. non-atomic git multi-file save, cost transparency timing, auto-save vs. manual.
+
+- **Sprint 1 questions resolved later same day (Linear: JCC-480):**
+  - Stubbed live-test demo for screen recording → INCLUDE in Sprint 1 (added as step 1.7).
+  - Third template from cc-dev-team → SKIP. Ship with two templates.
+  - Sequencing → Live Test FIRST (Sprint 3), Git Sync LAST (Sprint 4). User overrode prior recommendation.
+- **Updated sprint plan:**
+  - Sprint 1 (~6-7 hr CC, +1 hr for stubbed demo): edge fix + tests + 2 templates + showcase + docs route + StubbedLiveTest component with podcast-team fixtures.
+  - Sprint 2: joint office-hours design pass for Live Test + Git Sync.
+  - Sprint 3 (~2-3 wks): implement Live Test (real BYOK execution, replaces stubbed demo).
+  - Sprint 4 (~1-2 wks): implement Git Sync (browser-only via existing OAuth proxy).
+- **Next:** start Sprint 1 (or route to `/plan-eng-review` for architecture pass on `derive.ts` phase classification with long agent chains).
+
+## 2026-04-22 — Sprint 1 complete (Linear: JCC-483)
+
+**Shipped in 5 atomic commits:**
+1. `4832532 feat(workflow): allow agent→agent and agent→command edges` — `VALID_CONNECTIONS` lifted; added Kahn topological sort over connected agent/skill subset so chained agents render in pipeline order; 3 new unit tests.
+2. `0b0c192 feat(templates): replace examples with production multi-agent workflows` — podcast-team (10 nodes, 10 edges) and writing-team (7 nodes, 5 edges) ported from `cc-podcast-team` and `cc-writing-team`. Starters renamed with `Starter:` prefix. Serializer round-trip test added.
+3. `eed68bd feat(showcase, docs): two-tier template gallery + Workflow Anatomy explainer` — showcase page split into Production Workflows and Hello World sections with inline SVG chain diagrams. New `/docs/anatomy` route explains the four phases with the podcast template as worked example.
+4. `9ef7815 feat(builder): stubbed Live Test demo as preview of Sprint 3` — 4th builder tab, pre-recorded outputs stream with realistic typing delays, vanilla Claude baseline side-by-side, "Edit and re-run from here" buttons disabled with "Coming in Sprint 3" tooltip. Honesty banner non-negotiable.
+5. `f9ddcf1 docs(process-log): record Sprint 1 completion` — this entry.
+
+**Verified:**
+- 102 vitest tests pass (4 new: 3 derive topology + 1 serializer round-trip).
+- TypeScript type check clean.
+- `next build` succeeds with all 5 routes prerendered static (`/`, `/builder`, `/showcase`, `/docs/anatomy`, `/_not-found`).
+- Manual browser QA: showcase renders chain diagrams, podcast template loads in Workflow page with 7 agents in correct pipeline order, Live Test demo streams through all 7 steps with baseline comparison, docs/anatomy page complete.
+- Lint: new files clean; 5 pre-existing errors in files I didn't touch (tracked separately).
+
+**Parallel prep during Sprint 1:**
+- Sprint 2 Live Test design doc drafted: `~/.gstack/projects/johannesfritz-ai-team-builder/johannesfritz-main-livetest-design-20260422.md`
+- Sprint 2 Git Sync design doc drafted: `~/.gstack/projects/johannesfritz-ai-team-builder/johannesfritz-main-gitsync-design-20260422.md`
+- OAuth proxy mapped for Sprint 3 (Anthropic CORS forwarder at `POST /api/anthropic/messages` with SSE streaming) and Sprint 4 (GitHub Contents + Git Data API writes — no scope changes needed, `repo` already present).
+
+**Next:** push to GitHub (pending user confirmation), then review the two draft design docs and run the Sprint 2 `/office-hours` session. Deploy to `jfritz.xyz/ai-team-builder` held for user approval.
+
 ## Backlog
 
 ### Priority 1: Testing
