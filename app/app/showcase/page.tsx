@@ -76,12 +76,16 @@ export default function ShowcasePage() {
         <h1 className="text-3xl font-bold mb-2">Real-World Plugins</h1>
         <p className="text-zinc-400 mb-8">Production Claude Code plugins you can explore and open in the builder.</p>
 
-        {/* Starter Templates */}
+        {/* Templates */}
         {!selected && (
           <>
-            <h2 className="text-xl font-bold mb-4">Starter Templates</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-              {TEMPLATES.map(template => (
+            {/* Production templates: full multi-agent pipelines, featured larger */}
+            <div className="mb-2 flex items-baseline gap-3">
+              <h2 className="text-xl font-bold">Production Workflows</h2>
+              <span className="text-xs text-zinc-500">Real multi-agent pipelines you can fork.</span>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-12">
+              {TEMPLATES.filter(t => t.category !== 'Starter').map(template => (
                 <Card
                   key={template.id}
                   className="bg-zinc-900 border-zinc-800 hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-900/20 transition-all duration-200 p-5 group"
@@ -93,11 +97,51 @@ export default function ShowcasePage() {
                     <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
                       {template.nodes.length} nodes
                     </Badge>
+                    <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
+                      {template.edges.length} edges
+                    </Badge>
                   </div>
-                  <h3 className="text-base font-semibold text-zinc-200 mb-1 group-hover:text-emerald-400 transition-colors">{template.name}</h3>
-                  <p className="text-sm text-zinc-500 leading-relaxed mb-3">{template.description}</p>
+                  <h3 className="text-lg font-semibold text-zinc-200 mb-1 group-hover:text-emerald-400 transition-colors">
+                    {template.name}
+                  </h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed mb-4">{template.description}</p>
+                  <div className="bg-zinc-950 border border-zinc-800 rounded p-2 mb-4 overflow-x-auto">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/templates/${template.id}.svg`}
+                      alt={`${template.name} workflow chain diagram`}
+                      className="min-w-[600px] w-full h-auto"
+                    />
+                  </div>
                   <Link href={`/builder?template=${template.id}`}>
                     <Button size="sm" variant="outline" className="border-emerald-700 text-emerald-400 hover:bg-emerald-950 text-xs h-7">
+                      Fork &amp; Customize
+                    </Button>
+                  </Link>
+                </Card>
+              ))}
+            </div>
+
+            {/* Starter templates: 1-step learning examples */}
+            <div className="mb-2 flex items-baseline gap-3">
+              <h2 className="text-xl font-bold">Hello World</h2>
+              <span className="text-xs text-zinc-500">1-step starters for learning the model. Read these, then build something real.</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+              {TEMPLATES.filter(t => t.category === 'Starter').map(template => (
+                <Card
+                  key={template.id}
+                  className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-200 p-4 group"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
+                      {template.nodes.length} nodes
+                    </Badge>
+                  </div>
+                  <h3 className="text-sm font-semibold text-zinc-300 mb-1">{template.name}</h3>
+                  <p className="text-xs text-zinc-500 leading-relaxed mb-3">{template.description}</p>
+                  <Link href={`/builder?template=${template.id}`}>
+                    <Button size="sm" variant="ghost" className="text-zinc-400 hover:text-zinc-200 text-[11px] h-6 px-2">
                       Fork &amp; Customize
                     </Button>
                   </Link>
