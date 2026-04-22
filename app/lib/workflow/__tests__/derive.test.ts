@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { deriveWorkflow, getCommandNodes } from '../derive';
+import { VALID_CONNECTIONS } from '../../plugin-types';
 import type { Node, Edge } from '@xyflow/react';
 
 function makeNode(id: string, type: string, data: Record<string, unknown>): Node {
@@ -84,6 +85,63 @@ describe('deriveWorkflow', () => {
     expect(result.length).toBeGreaterThan(0);
     // Entry step should always be present
     expect(result.find(s => s.phase === 'entry')).toBeDefined();
+  });
+
+  it('orders chained agents topologically (a→b→c→command), not in node-array order', () => {
+    // Insert nodes in REVERSE pipeline order to prove ordering comes from edges, not array position
+    const nodes = [
+      makeNode('c1', 'command', { name: 'produce', prompt: 'Run pipeline.' }),
+      makeNode('a3', 'agent', { name: 'voice-producer', model: 'sonnet', systemPrompt: 'Generate audio.' }),
+      makeNode('a2', 'agent', { name: 'script-reviewer', model: 'sonnet', systemPrompt: 'Review the script.' }),
+      makeNode('a1', 'agent', { name: 'script-writer', model: 'opus', systemPrompt: 'Write the script.' }),
+    ];
+    const edges: Edge[] = [
+      { id: 'e1', source: 'a1', target: 'a2' },
+      { id: 'e2', source: 'a2', target: 'a3' },
+      { id: 'e3', source: 'a3', target: 'c1' },
+    ];
+    const result = deriveWorkflow('c1', nodes, edges);
+    const agentSteps = result.filter(s => s.phase === 'execute' && s.nodeType === 'agent');
+    expect(agentSteps.map(s => s.name)).toEqual(['script-writer', 'script-reviewer', 'voice-producer']);
+  });
+
+  it('classifies all chained agents as execute phase, even in long chains', () => {
+    const nodes: Node[] = [
+      ...Array.from({ length: 6 }, (_, i) =>
+        makeNode(`a${i + 1}`, 'agent', { name: `agent-${i + 1}`, model: 'sonnet', systemPrompt: 'Do work.' }),
+      ),
+      makeNode('c1', 'command', { name: 'pipeline', prompt: 'Run pipeline.' }),
+    ];
+    const edges: Edge[] = [
+      { id: 'e1', source: 'a1', target: 'a2' },
+      { id: 'e2', source: 'a2', target: 'a3' },
+      { id: 'e3', source: 'a3', target: 'a4' },
+      { id: 'e4', source: 'a4', target: 'a5' },
+      { id: 'e5', source: 'a5', target: 'a6' },
+      { id: 'e6', source: 'a6', target: 'c1' },
+    ];
+    const result = deriveWorkflow('c1', nodes, edges);
+    const agentSteps = result.filter(s => s.nodeType === 'agent');
+    expect(agentSteps).toHaveLength(6);
+    expect(agentSteps.every(s => s.phase === 'execute')).toBe(true);
+  });
+
+  it('validates connections per VALID_CONNECTIONS: accepts agent→agent and agent→command, rejects forbidden', () => {
+    // Newly accepted (Sprint 1)
+    expect(VALID_CONNECTIONS.agent).toContain('agent');
+    expect(VALID_CONNECTIONS.agent).toContain('command');
+    expect(VALID_CONNECTIONS.agent).toContain('skill');
+    // Existing accepted
+    expect(VALID_CONNECTIONS.hook).toEqual(expect.arrayContaining(['rule', 'skill']));
+    expect(VALID_CONNECTIONS.skill).toEqual(['command']);
+    // Forbidden — terminal node types have no outgoing edges
+    expect(VALID_CONNECTIONS.command).toEqual([]);
+    expect(VALID_CONNECTIONS.rule).toEqual([]);
+    expect(VALID_CONNECTIONS.mcp).toEqual([]);
+    // Specifically forbidden — skill→skill stays out until a real example demands it
+    expect(VALID_CONNECTIONS.skill).not.toContain('skill');
+    // Specifically forbidden — no reverse edges from terminal types
+    expect(VALID_CONNECTIONS.command).not.toContain('agent');
   });
 
   it('extracts internal workflow from command with markdown headings', () => {

@@ -40,6 +40,46 @@ function collectAncestors(nodeId: string, nodes: Node[], edges: Edge[]): Set<str
   return ancestors;
 }
 
+// Kahn's algorithm: topological sort over a subset of nodes.
+// Edges between nodes outside the subset are ignored.
+// Cycles are tolerated: any leftover nodes are appended in node-array order.
+function topologicalSort(subsetIds: string[], nodes: Node[], edges: Edge[]): string[] {
+  const subset = new Set(subsetIds);
+  const indegree = new Map<string, number>();
+  for (const id of subsetIds) indegree.set(id, 0);
+
+  const subsetEdges = edges.filter(e => subset.has(e.source) && subset.has(e.target));
+  for (const e of subsetEdges) {
+    indegree.set(e.target, (indegree.get(e.target) ?? 0) + 1);
+  }
+
+  // Seed with zero-indegree nodes, preserving node-array order for stable output
+  const result: string[] = [];
+  const queue = subsetIds.filter(id => indegree.get(id) === 0);
+
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    result.push(id);
+    for (const e of subsetEdges) {
+      if (e.source === id) {
+        const next = (indegree.get(e.target) ?? 0) - 1;
+        indegree.set(e.target, next);
+        if (next === 0) queue.push(e.target);
+      }
+    }
+  }
+
+  // Append any nodes left over (cycles) in node-array order
+  if (result.length < subsetIds.length) {
+    const seen = new Set(result);
+    for (const id of subsetIds) {
+      if (!seen.has(id)) result.push(id);
+    }
+  }
+
+  return result;
+}
+
 export function deriveWorkflow(
   commandNodeId: string,
   nodes: Node[],
@@ -114,9 +154,22 @@ export function deriveWorkflow(
     });
   }
 
-  // Phase 3: Execute — Connected agents and skills
-  const connectedAgents = nodes.filter(n => n.type === 'agent' && connectedIds.has(n.id));
-  const connectedSkills = nodes.filter(n => n.type === 'skill' && connectedIds.has(n.id));
+  // Phase 3: Execute — Connected agents and skills, sorted topologically.
+  // Topological sort ensures pipelines render in pipeline order
+  // (e.g., script-writer before script-reviewer when there's an edge between them),
+  // not just node-array order.
+  const connectedAgentIds = nodes
+    .filter(n => n.type === 'agent' && connectedIds.has(n.id))
+    .map(n => n.id);
+  const connectedSkillIds = nodes
+    .filter(n => n.type === 'skill' && connectedIds.has(n.id))
+    .map(n => n.id);
+
+  const sortedAgentIds = topologicalSort(connectedAgentIds, nodes, edges);
+  const sortedSkillIds = topologicalSort(connectedSkillIds, nodes, edges);
+
+  const connectedAgents = sortedAgentIds.map(id => nodes.find(n => n.id === id)!);
+  const connectedSkills = sortedSkillIds.map(id => nodes.find(n => n.id === id)!);
 
   for (const node of connectedAgents) {
     const d = node.data as unknown as AgentData;

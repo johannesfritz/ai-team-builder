@@ -151,7 +151,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
           </div>
           <HealthIndicator />
           <div className="text-[9px] text-zinc-700 leading-tight">
-            Valid: hook→rule/skill, agent→skill, skill→command
+            Valid: hook→rule/skill, agent→agent/skill/command, skill→command
           </div>
         </div>
       </div>

@@ -54,7 +54,7 @@ export type PluginData = RuleData | HookData | SkillData | CommandData | AgentDa
 // Valid edge connections: source type -> allowed target types
 export const VALID_CONNECTIONS: Record<PluginNodeType, PluginNodeType[]> = {
   hook: ['rule', 'skill'],
-  agent: ['skill'],
+  agent: ['agent', 'skill', 'command'],
   skill: ['command'],
   rule: [],
   command: [],
