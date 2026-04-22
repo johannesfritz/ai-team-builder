@@ -15,6 +15,7 @@ import { NODE_COLORS, NODE_LABELS, type PluginNodeType } from '@/lib/plugin-type
 import { ImportDialog } from './ImportDialog';
 import { CreateNodeDialog } from './CreateNodeDialog';
 import { HealthIndicator } from './HealthIndicator';
+import { ConnectRepoDialog } from './ConnectRepoDialog';
 
 const NODE_TYPES: PluginNodeType[] = ['rule', 'hook', 'skill', 'command', 'agent', 'mcp'];
 
@@ -24,6 +25,7 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
   const [exportOutput, setExportOutput] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createDialogType, setCreateDialogType] = useState<PluginNodeType | undefined>(undefined);
+  const [connectRepoOpen, setConnectRepoOpen] = useState(false);
 
   const handleExport = () => {
     if (nodes.length === 0) {
@@ -113,6 +115,15 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
         </div>
 
         <ImportDialog />
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-sky-700 text-sky-400 hover:bg-sky-950 h-8 text-xs"
+          onClick={() => setConnectRepoOpen(true)}
+        >
+          Connect repo
+        </Button>
 
         <Button
           size="sm"
@@ -252,6 +263,8 @@ export function Toolbar({ onShowDryRun }: { onShowDryRun?: () => void }) {
         onClose={() => { setCreateDialogOpen(false); setCreateDialogType(undefined); }}
         presetType={createDialogType}
       />
+
+      <ConnectRepoDialog open={connectRepoOpen} onClose={() => setConnectRepoOpen(false)} />
     </>
   );
 }
