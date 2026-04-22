@@ -7,7 +7,9 @@
 **Deploy:** jfritz.xyz/ai-team-builder (Hetzner, static export via nginx)
 
 ## Status
-**SPRINT 1 SHIPPED, SPRINT 2 DESIGN APPROVED.** Edge fix, production templates (podcast-team, writing-team), showcase with SVG diagrams, Workflow Anatomy docs, and stubbed Live Test demo all landed in 5 commits on main (102 tests pass). Sprint 2 office-hours produced two approved design docs (Live Test, Git Sync) after 2 rounds of adversarial review each — both 9/10. Sprint 3 (Live Test implementation) and Sprint 4 (Git Sync implementation) are ready to start.
+**SPRINTS 1-4 ALL SHIPPED TO GITHUB. AWAITING DEPLOY.** All four sprints of the approved roadmap are now in code on main: production templates + agent-chain edge fix (Sprint 1), design docs for Sprint 3 + Sprint 4 (Sprint 2 office-hours), real BYOK Live Test via proxy-routed SSE (Sprint 3), Git Sync via atomic Git Data API saves with conflict modal and Connect repo dialog (Sprint 4). 171 tests pass, TypeScript clean, production build clean.
+
+**Held for deploy:** proxy changes to `server/github-proxy.py` need Hetzner deployment (backup + dry-run rsync + systemd restart + smoke-test). Frontend static export needs `dist/` sync. nginx config needs `proxy_buffering off` for `/ai-team-builder/api/anthropic/` to stream properly.
 
 ## Log
 
@@ -381,6 +383,38 @@ Reviewed the two draft design docs produced in parallel during Sprint 1 work. Bo
 - Defaults locked: branch name `atb/{yyyymmdd}`, protection banner "may fail" not "will fail" with `permissions.push` check to downgrade to informational, naive filename-based commit auto-summary (not content-aware), drafts cleared immediately on save, `lastFetchedSha` updates on save and Refresh.
 
 **Next:** implement Sprint 3 (Live Test) per approved design — estimate human ~2-3 weeks, CC ~2-3 days. Sprint 4 (Git Sync) follows, ~1-2 weeks human / ~1-2 days CC.
+
+## 2026-04-22 — Sprint 3 + Sprint 4 implementation (Linear: JCC-492)
+
+Built and pushed both sprints to GitHub in a single session. All implementation per the approved designs from JCC-489; no scope changes.
+
+**Sprint 3 — Live Test (real BYOK execution):**
+- **Proxy** (`server/github-proxy.py`): new `POST /api/anthropic/messages` endpoint streaming SSE from Anthropic's `/v1/messages`. Per-request `X-Anthropic-Key` header, never logged. Client disconnect propagates via `request.is_disconnected()` → upstream `httpx` stream close (~100ms billing stop). 60 req/hr per-IP rate limit bucket specifically for this endpoint. CORS allows new header + PATCH method.
+- **Utilities** (`app/lib/anthropic/pricing.ts`, `app/lib/livetest/`): DAG walkers (`transitiveDescendants`, `topoOrderFrom` via Kahn), SSE parser for all Anthropic event types (ping, content_block_*, message_*, error, unknown log-and-continue), step input contract with convergence concat rule, SHA-256 short-hash, per-step runner with `AbortController` wiring.
+- **Component** (`app/components/builder/LiveTest.tsx`): replaces stubbed demo. Runs workflow agents sequentially against user's key, streams tokens, vanilla baseline in parallel with first step. Edit-prompt writes via canonical `updateNodeData` store mutator (auto-wires Sprint 4 dirty tracking). Re-run-from-step walks transitive descendants in the DAG. First-run triggers `ApiKeyModal` with localStorage opt-in (default OFF).
+- Removed `StubbedLiveTest.tsx` and `live-test-fixtures/` — the stub's job is done.
+
+**Sprint 4 — Git Sync (atomic saves via Git Data API):**
+- **Proxy** (`server/github-proxy.py`): PATCH/GET methods added to `/github/{path}`. `/repos/{owner}/{repo}/branches/{branch}` added to `ALLOWED_PATHS`. GitHub rate limit raised from 100/hr → 300/hr per IP.
+- **Save path** (`app/lib/gitsync/save.ts`): 5-step sequence. Steps 1-2 (ref + commit GET) go direct to GitHub; steps 3-5 (tree POST, commit POST, ref PATCH) route through proxy. Tree payload is diff-only with `base_tree`. Deletions use `sha: null`. `pluginRoot` prefix applied on save. Conflict detection at step 1 (stale vs `lastFetchedSha`) and step 5 (409 on PATCH).
+- **Load path** (`app/lib/gitsync/load.ts`): `parseRepoUrl` handles URL, tree URL, and `owner/repo[@branch]` forms. `loadRepo` fetches tree + files, detects `pluginRoot` (`.claude-plugin/` or root), returns a `RepoConnection` with `loadedFileMap` captured for diffing.
+- **Diff** (`app/lib/gitsync/diff.ts`): `diffFileMaps`, `changedFileCount`, `summarizeDiff` (plugin file type classifier), `buildCommitMessage` with 72-char title and `Co-Authored-By: AI Team Builder` footer.
+- **UI**: `ConnectRepoDialog` (URL paste), `SaveToRepo` header pill with debounced (200ms) changed-file counter and fast `isDirty` flag, embedded `ConflictModal` with force-overwrite confirmation gauntlet that correctly describes the reflog consequences, Cmd/Ctrl-S wired only when builder-root has focus. Connection survives page reload (persisted in builder store).
+
+**QA:** 171 tests pass (73 new this session: 40 Live Test + 30 Git Sync + 3 serializer round-trip regression checks), TypeScript clean, `next build` succeeds with all 5 routes still prerendered static. Manual browser QA confirmed: Live Test panel renders the new honesty banner + prompt input + 7-agent timeline + cost estimate, Connect repo dialog renders with validation hints, DEMO badge removed from Live Test tab.
+
+**Committed in 5 atomic commits:**
+1. `a219a67` feat(proxy): Anthropic SSE forwarder + Git Sync PATCH/GET methods
+2. Live Test utilities (pricing, DAG, SSE, runner, store)
+3. Live Test component + ApiKeyModal + stub removal
+4. Git Sync lib (save/load/diff/types) + store connection field
+5. Save/Connect UI + Toolbar wiring
+
+**Held for user approval — not yet done:**
+1. Deploy `server/github-proxy.py` to Hetzner (backup + dry-run rsync + systemd restart + smoke-test per server-operation-safeguards).
+2. Add `proxy_buffering off` + `X-Accel-Buffering: no` to nginx config block for `/ai-team-builder/api/anthropic/`.
+3. Build + sync `dist/` to Hetzner.
+4. Post-deploy `/canary` smoke test. End-to-end live test against real Anthropic and real GitHub repo.
 
 ## 2026-04-22 — Sprint 1 complete (Linear: JCC-483)
 
