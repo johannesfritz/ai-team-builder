@@ -483,3 +483,9 @@ User shared full token to drive Journey D headless. Token verified via `GET /use
 - Loading states, error boundaries
 - Responsive layout improvements
 - Drag reorder in workflow view (@dnd-kit installed but not wired)
+
+### 2026-04-27 — OAuth state passthrough (JCC-567)
+- **What:** Fixed two bugs that broke "Open & Connect" flow on showcase team plugins for users who had revoked their OAuth token. (1) Stale token in localStorage caused 401 with no fallback to fresh OAuth; ConnectRepoDialog now detects 401, clears the token, and re-OAuths automatically. (2) The OAuth redirect dropped the `?connect=...` param, so the user landed on a bare builder page with their pre-existing persisted state showing (e.g. "podcast team" from prior testing). Now the target repo passes through GitHub's `state` parameter and the builder page resumes the connect dialog after callback. Also surfaces exact org admin URL on 403 from org-restricted private repos.
+- **Outcome:** Live on https://jfritz.xyz/ai-team-builder/. Deployed proxy to `/var/www/ai-team-builder-data/github-proxy.py` (correct service path — first deploy went to wrong dir). Verified `?state=connect:foo/bar` flows into GitHub authorize URL.
+- **Files touched:** `app/components/builder/ConnectRepoDialog.tsx`, `app/lib/github-auth.ts`, `app/app/builder/page.tsx`, `server/github-proxy.py`. Commits: ec14070, 9030996.
+- **Follow-up:** None — user to verify end-to-end on DPA card. If org admin still doesn't see request, the OAuth app may have been pre-denied for the org; would need different fix path.
