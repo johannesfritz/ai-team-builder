@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useBuilderStore } from '@/stores/builder-store';
 import { parseRepoUrl, loadRepo } from '@/lib/gitsync/load';
 import { parsePluginFiles } from '@/lib/import/parse-plugin';
-import { getGitHubToken, startGitHubAuth } from '@/lib/github-auth';
+import { getGitHubToken, startGitHubAuth, clearGitHubToken } from '@/lib/github-auth';
 import { toast } from '@/lib/toast';
 
 export interface ConnectRepoDialogProps {
@@ -52,6 +52,14 @@ export function ConnectRepoDialog({ open, onClose, initialUrl }: ConnectRepoDial
       onClose();
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
+      // 401 = stored token has been revoked or expired. Drop it and re-OAuth so
+      // the consent screen surfaces the org access request flow.
+      if (/HTTP 401\b/.test(msg)) {
+        clearGitHubToken();
+        toast('GitHub token expired. Re-authorizing...', 'warning');
+        startGitHubAuth();
+        return;
+      }
       setErr(msg);
     } finally {
       setLoading(false);
