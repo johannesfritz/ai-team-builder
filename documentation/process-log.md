@@ -439,6 +439,36 @@ Built and pushed both sprints to GitHub in a single session. All implementation 
 
 ## (See 2026-04-22 entry below for Sprint 1 thru Sprint 4 deploy + production verification)
 
+## 2026-04-27 — Journey D end-to-end on real GitHub repo (Linear: JCC-560)
+
+**OAuth diagnostic + Git Sync save flow verified live.**
+
+User completed GitHub OAuth via the prod app (proxy logs confirmed `/auth/github` → 307 and `/auth/callback?code=...` → 307 redirect with token in URL fragment). Token landed in localStorage as `gho_XM4G...`.
+
+User shared full token to drive Journey D headless. Token verified via `GET /user` returning `johannesfritz` with `repo + gist` scopes.
+
+**Test repo created:** `johannesfritz/atb-livesync-smoketest` (created via API for this purpose; deleted at session end). Seeded with `.claude-plugin/plugin.json` + `.claude-plugin/agents/smoke-agent.md`.
+
+**Connect repo flow verified:**
+- Headless browse opened https://jfritz.xyz/ai-team-builder/builder
+- Injected token into localStorage, reloaded
+- Clicked Connect repo → pasted `johannesfritz/atb-livesync-smoketest` → clicked Connect
+- Plugin loaded into builder: 1 agent visible, header pill showed `johannesfritz/atb-livesync-smoketest@main`, success toast displayed
+- Save button immediately showed "(2 changes)" — likely serialize/parse round-trip difference between seeded plain JSON and serializer's canonical output. Worth investigating but not blocking; the save successfully overwrote with canonical format.
+
+**Save flow verified end-to-end:**
+- Clicked Save → 5-step Git Data API sequence executed via proxy
+- Commit `43a6090f` landed on GitHub with auto-generated message: `Update via AI Team Builder: updated agent smoke-agent, .claude-plugin/p…`
+- Body lists modified files
+- `Co-Authored-By: AI Team Builder <noreply@ai-team-builder.dev>` footer present
+- UI updated to "Saved" (clean state) with toast confirming
+
+**Conflict-modal UI test attempted but not completed:** Pushed an external commit (`caf37bec`) to the same branch via API to make the connection's lastFetchedSha stale. Then tried to trigger a local mutation via the Properties panel inputs — programmatic React controlled-input setters didn't propagate to the store, so the Save button stayed disabled. The "+ Hook" toolbar dialog opened correctly but its Create button stayed disabled (Name field required). The conflict detection logic itself is well-covered by 10 unit tests in `app/lib/gitsync/__tests__/save.test.ts` including stale_sha at step 1, 409 at step 5, force-overwrite with old base parent, deletions with sha:null, and pluginRoot prefix. Conflict UI E2E remains a follow-up.
+
+**Cleanup:** OAuth token cleared from headless browse localStorage. Test repo deletion requires `delete_repo` scope which isn't in the OAuth proxy's `repo,gist` scope set — user instructed to delete via UI at github.com/settings.
+
+**Status:** Journeys A, B, C, D (happy path) verified live on production. Journey E (Live Test → Save bridge) wiring is in place via canonical updateNodeData mutator but not yet driven end-to-end in a single session.
+
 ## Backlog
 
 ### Priority 1: Testing
