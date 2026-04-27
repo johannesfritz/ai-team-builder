@@ -10,6 +10,7 @@ import { DryRunPanel } from '@/components/builder/DryRun';
 import { LivePreview } from '@/components/builder/LivePreview';
 import { LiveTest } from '@/components/builder/LiveTest';
 import { SaveToRepo } from '@/components/builder/SaveToRepo';
+import { ConnectRepoDialog } from '@/components/builder/ConnectRepoDialog';
 import { Toolbar } from '@/components/builder/Toolbar';
 import { CommandPalette } from '@/components/builder/CommandPalette';
 import { useBuilderStore } from '@/stores/builder-store';
@@ -28,6 +29,8 @@ function BuilderWithParams() {
   const searchParams = useSearchParams();
   const { nodes, edges, meta, loadGraph, setMeta, undo, redo } = useBuilderStore();
   const [loaded, setLoaded] = useState(false);
+  const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+  const [connectInitialUrl, setConnectInitialUrl] = useState<string>('');
 
   useEffect(() => {
     if (loaded) return;
@@ -71,6 +74,17 @@ function BuilderWithParams() {
         setMeta({ name: template.name, description: template.description });
       }
     }
+
+    // Deep-link from showcase: ?connect=owner/repo[@branch] auto-opens the
+    // Connect Repo dialog pre-filled. User clicks Connect (or hits Enter) to load.
+    // Pre-fill only — we don't auto-execute the load because it requires a token,
+    // and the dialog already handles the OAuth-then-retry path correctly.
+    const connectRepo = searchParams.get('connect');
+    if (connectRepo) {
+      setConnectInitialUrl(connectRepo);
+      setConnectDialogOpen(true);
+    }
+
     setLoaded(true);
   }, [searchParams, loadGraph, setMeta, loaded]);
 
@@ -145,8 +159,25 @@ function BuilderWithParams() {
 
   return (
     <div id="builder-root" className="flex h-screen bg-zinc-950 text-zinc-200">
-      <Toolbar onShowDryRun={() => setRightPanel('dryrun')} />
+      <Toolbar
+        onShowDryRun={() => setRightPanel('dryrun')}
+        onConnectRepo={() => { setConnectInitialUrl(''); setConnectDialogOpen(true); }}
+      />
       <CommandPalette onExport={handleCmdExport} onImport={handleCmdImport} onShare={handleCmdShare} />
+      <ConnectRepoDialog
+        open={connectDialogOpen}
+        initialUrl={connectInitialUrl}
+        onClose={() => {
+          setConnectDialogOpen(false);
+          setConnectInitialUrl('');
+          // Clear the ?connect= param so reload doesn't re-open the dialog.
+          if (typeof window !== 'undefined' && searchParams.get('connect')) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('connect');
+            window.history.replaceState(null, '', url.toString());
+          }
+        }}
+      />
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { fetchPlugins, fetchPlugin, type PluginSummary, type PluginDetail } from '@/lib/api';
 import { parsePluginFiles } from '@/lib/import/parse-plugin';
 import { TEMPLATES } from '@/lib/templates';
+import { GITHUB_PLUGINS } from '@/lib/github-plugins';
 import { useBuilderStore } from '@/stores/builder-store';
 import { useRouter } from 'next/navigation';
 import { assetPath } from '@/lib/base-path';
@@ -80,6 +81,67 @@ export default function ShowcasePage() {
         {/* Templates */}
         {!selected && (
           <>
+            {/* Live team plugins on GitHub — click to connect + edit + save back */}
+            <div className="mb-2 flex items-baseline gap-3">
+              <h2 className="text-xl font-bold">Live Team Plugins</h2>
+              <span className="text-xs text-zinc-500">
+                Connect, edit, save back to the source repo. Changes ship as commits.
+              </span>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-12">
+              {GITHUB_PLUGINS.map(p => (
+                <Card
+                  key={p.id}
+                  className="bg-zinc-900 border-zinc-800 hover:border-sky-600 hover:shadow-lg hover:shadow-sky-900/20 transition-all duration-200 p-5 group"
+                >
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <Badge variant="outline" className="text-[10px] border-sky-700 text-sky-400">
+                      Live · GitHub
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px] border-zinc-700 text-zinc-500">
+                      {p.team}
+                    </Badge>
+                    {p.badge && (
+                      <Badge variant="outline" className="text-[10px] border-amber-700 text-amber-400">
+                        {p.badge}
+                      </Badge>
+                    )}
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-200 mb-1 group-hover:text-sky-400 transition-colors">
+                    {p.title}
+                  </h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed mb-2">{p.description}</p>
+                  <code className="block text-[11px] text-zinc-600 mb-3 font-mono">
+                    {p.repo}{p.branch ? `@${p.branch}` : ''}
+                  </code>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/builder?connect=${encodeURIComponent(p.repo + (p.branch ? '@' + p.branch : ''))}`}>
+                      <Button size="sm" variant="outline" className="border-sky-700 text-sky-400 hover:bg-sky-950 text-xs h-7">
+                        Open &amp; Connect
+                      </Button>
+                    </Link>
+                    <a
+                      href={`https://github.com/${p.repo}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-zinc-500 hover:text-zinc-300"
+                    >
+                      View on GitHub →
+                    </a>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* OAuth org-access note */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-12 text-[11px] text-zinc-500 leading-relaxed">
+              <strong className="text-zinc-300">Note for org admins:</strong> private repos in
+              GitHub organisations with OAuth App access restrictions enabled require a one-time
+              admin approval before AI Team Builder can read or write. If a Connect attempt
+              returns a 403 mentioning OAuth App access, an org admin needs to approve the app at{' '}
+              <code className="text-sky-400">github.com/organizations/[your-org]/settings/oauth_application_policy</code>.
+            </div>
+
             {/* Production templates: full multi-agent pipelines, featured larger */}
             <div className="mb-2 flex items-baseline gap-3">
               <h2 className="text-xl font-bold">Production Workflows</h2>

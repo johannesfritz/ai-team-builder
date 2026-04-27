@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useBuilderStore } from '@/stores/builder-store';
 import { parseRepoUrl, loadRepo } from '@/lib/gitsync/load';
@@ -11,13 +11,20 @@ import { toast } from '@/lib/toast';
 export interface ConnectRepoDialogProps {
   open: boolean;
   onClose: () => void;
+  /** Pre-fill the URL input — used by deep-link from showcase. */
+  initialUrl?: string;
 }
 
-export function ConnectRepoDialog({ open, onClose }: ConnectRepoDialogProps) {
+export function ConnectRepoDialog({ open, onClose, initialUrl }: ConnectRepoDialogProps) {
   const { loadGraph, setMeta, setConnection } = useBuilderStore();
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(initialUrl ?? '');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Sync initialUrl when the prop changes (e.g., parent opens with a different repo).
+  useEffect(() => {
+    if (initialUrl !== undefined) setInput(initialUrl);
+  }, [initialUrl]);
 
   if (!open) return null;
 
