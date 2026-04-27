@@ -38,7 +38,9 @@ export function ConnectRepoDialog({ open, onClose, initialUrl }: ConnectRepoDial
     const token = getGitHubToken();
     if (!token) {
       toast('Connect GitHub first.', 'warning');
-      startGitHubAuth();
+      // Pass the target repo through OAuth so we can auto-resume the connect
+      // attempt after the redirect round-trip.
+      startGitHubAuth(`connect:${input}`);
       return;
     }
     setLoading(true);
@@ -53,11 +55,21 @@ export function ConnectRepoDialog({ open, onClose, initialUrl }: ConnectRepoDial
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       // 401 = stored token has been revoked or expired. Drop it and re-OAuth so
-      // the consent screen surfaces the org access request flow.
+      // the consent screen surfaces the org access request flow. Pass the
+      // target repo through state so we resume the connect after redirect.
       if (/HTTP 401\b/.test(msg)) {
         clearGitHubToken();
         toast('GitHub token expired. Re-authorizing...', 'warning');
-        startGitHubAuth();
+        startGitHubAuth(`connect:${input}`);
+        return;
+      }
+      // 403 on a private org repo = OAuth App not approved by the org. Surface
+      // the exact org admin URL so the user knows where to click.
+      if (/HTTP 403\b/.test(msg) && parsed) {
+        const orgUrl = `https://github.com/organizations/${parsed.owner}/settings/oauth_application_policy`;
+        setErr(
+          `403 — the ${parsed.owner} org hasn't approved this OAuth app. An admin must approve at: ${orgUrl}`,
+        );
         return;
       }
       setErr(msg);

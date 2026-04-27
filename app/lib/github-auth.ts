@@ -13,8 +13,9 @@ export function clearGitHubToken(): void {
   localStorage.removeItem('github_token');
 }
 
-export function startGitHubAuth(): void {
-  window.location.href = `${window.location.origin}${API_BASE}/auth/github`;
+export function startGitHubAuth(state?: string): void {
+  const stateParam = state ? `?state=${encodeURIComponent(state)}` : '';
+  window.location.href = `${window.location.origin}${API_BASE}/auth/github${stateParam}`;
 }
 
 export function isAuthenticated(): boolean {

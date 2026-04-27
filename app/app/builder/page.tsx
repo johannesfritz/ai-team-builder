@@ -38,13 +38,27 @@ function BuilderWithParams() {
     const hash = typeof window !== 'undefined' ? window.location.hash : '';
 
     // Handle GitHub OAuth callback: #github_token=...
+    // Optional ?state=connect:<repo> tells us to resume an in-flight connect.
     if (hash.startsWith('#github_token=')) {
       const token = hash.slice('#github_token='.length);
       if (token) {
         setGitHubToken(token);
         toast('GitHub connected', 'success');
       }
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      const stateParam = searchParams.get('state') ?? '';
+      // Strip both hash and state from the URL so refresh doesn't re-trigger.
+      const url = new URL(window.location.href);
+      url.searchParams.delete('state');
+      url.hash = '';
+      window.history.replaceState(null, '', url.toString());
+      // Resume connect flow if state asked us to.
+      if (stateParam.startsWith('connect:')) {
+        const targetRepo = stateParam.slice('connect:'.length);
+        if (targetRepo) {
+          setConnectInitialUrl(targetRepo);
+          setConnectDialogOpen(true);
+        }
+      }
       setLoaded(true);
       return;
     }

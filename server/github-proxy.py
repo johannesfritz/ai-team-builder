@@ -98,18 +98,22 @@ def is_allowed_path(path: str) -> bool:
 # --- OAuth endpoints ---
 
 @app.get("/auth/github")
-async def auth_github() -> RedirectResponse:
+async def auth_github(state: str = "") -> RedirectResponse:
+    # Optional `state` round-trips back via GitHub so the frontend can resume
+    # the in-flight action (e.g. "connect to repo X") after the OAuth detour.
+    state_param = f"&state={state}" if state else ""
     url = (
         f"https://github.com/login/oauth/authorize"
         f"?client_id={GITHUB_CLIENT_ID}"
         f"&redirect_uri={CALLBACK_URL}"
         f"&scope=repo,gist"
+        f"{state_param}"
     )
     return RedirectResponse(url)
 
 
 @app.get("/auth/callback")
-async def auth_callback(code: str) -> RedirectResponse:
+async def auth_callback(code: str, state: str = "") -> RedirectResponse:
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             "https://github.com/login/oauth/access_token",
@@ -125,7 +129,10 @@ async def auth_callback(code: str) -> RedirectResponse:
     error = data.get("error", "")
     if error or not token:
         return RedirectResponse(f"{APP_URL}?auth_error={error or 'no_token'}")
-    return RedirectResponse(f"{APP_URL}#github_token={token}")
+    # Forward `state` as a query param alongside the token in the hash so the
+    # frontend can resume whatever it was doing pre-OAuth.
+    state_query = f"?state={state}" if state else ""
+    return RedirectResponse(f"{APP_URL}{state_query}#github_token={token}")
 
 
 # --- GitHub API proxy ---
