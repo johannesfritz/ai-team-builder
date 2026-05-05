@@ -489,3 +489,9 @@ User shared full token to drive Journey D headless. Token verified via `GET /use
 - **Outcome:** Live on https://jfritz.xyz/ai-team-builder/. Deployed proxy to `/var/www/ai-team-builder-data/github-proxy.py` (correct service path — first deploy went to wrong dir). Verified `?state=connect:foo/bar` flows into GitHub authorize URL.
 - **Files touched:** `app/components/builder/ConnectRepoDialog.tsx`, `app/lib/github-auth.ts`, `app/app/builder/page.tsx`, `server/github-proxy.py`. Commits: ec14070, 9030996.
 - **Follow-up:** None — user to verify end-to-end on DPA card. If org admin still doesn't see request, the OAuth app may have been pre-denied for the org; would need different fix path.
+
+### 2026-05-05 — Marketplace plugin layout support (JCC-734)
+- **What:** Connect-to-repo flow worked but rendered 0 components when the repo used the marketplace layout (root `.claude-plugin/marketplace.json` + nested `plugins/<name>/.claude-plugin/plugin.json`). Updated `detectPluginRoot` in `lib/gitsync/save.ts` to detect this case and return `plugins/<name>` as pluginRoot. Added unit tests for single-plugin and multi-plugin marketplaces.
+- **Outcome:** Live on https://jfritz.xyz/ai-team-builder/. Verified marketplace detection in deployed bundle. Multi-plugin marketplaces pick alphabetically-first plugin (chooser UI is a follow-up).
+- **Files touched:** `app/lib/gitsync/save.ts`, `app/lib/gitsync/__tests__/save.test.ts`. Commit: b73b1fe.
+- **Follow-up:** None — user to verify by reconnecting to the DPA team plugin.
