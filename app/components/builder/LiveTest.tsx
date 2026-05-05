@@ -67,7 +67,13 @@ export function LiveTest() {
   }, [hydrateFromStorage, subscribeStorageEvents]);
 
   const commands = useMemo(() => getCommandNodes(nodes), [nodes]);
-  const selectedCommandId = commands[0]?.id ?? null;
+  // Prefer the first command that has agent edges wired into it. Falls back to
+  // commands[0] when nothing is wired yet (so the empty-state message still fires).
+  const selectedCommandId = useMemo(() => {
+    const agentIds = new Set(nodes.filter(n => n.type === 'agent').map(n => n.id));
+    const wired = commands.find(c => edges.some(e => e.target === c.id && agentIds.has(e.source)));
+    return wired?.id ?? commands[0]?.id ?? null;
+  }, [commands, nodes, edges]);
 
   const startAgentId = useMemo(
     () => (selectedCommandId ? findStartAgent(selectedCommandId, nodes, edges) : null),
