@@ -185,4 +185,23 @@ describe('detectPluginRoot', () => {
   it('returns null when neither layout matches', () => {
     expect(detectPluginRoot(['README.md', 'LICENSE'])).toBeNull();
   });
+  it('returns plugins/<name> for marketplace layout with single nested plugin', () => {
+    expect(
+      detectPluginRoot([
+        '.claude-plugin/marketplace.json',
+        'plugins/dpa-policy-analysis-team/.claude-plugin/plugin.json',
+        'plugins/dpa-policy-analysis-team/agents/a.md',
+        'README.md',
+      ]),
+    ).toBe('plugins/dpa-policy-analysis-team');
+  });
+  it('picks alphabetically-first nested plugin in a multi-plugin marketplace', () => {
+    expect(
+      detectPluginRoot([
+        '.claude-plugin/marketplace.json',
+        'plugins/zebra-team/.claude-plugin/plugin.json',
+        'plugins/alpha-team/.claude-plugin/plugin.json',
+      ]),
+    ).toBe('plugins/alpha-team');
+  });
 });

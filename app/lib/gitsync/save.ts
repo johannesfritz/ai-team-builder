@@ -186,10 +186,25 @@ async function failure(resp: Response, kind: 'unauthorized' | 'branch_protected'
 
 /**
  * Detect the plugin root in a file tree response. Returns '' for root-level
- * plugin layout, '.claude-plugin' for standard, or null if neither matches
- * (caller surfaces a warning banner).
+ * plugin layout, '.claude-plugin' for standard, `plugins/<name>` for the
+ * marketplace-with-nested-plugin layout, or null if none match.
+ *
+ * For marketplaces with multiple nested plugins, returns the first one found
+ * (alphabetically by path). Multi-plugin selection UI is a future enhancement.
  */
 export function detectPluginRoot(paths: string[]): string | null {
+  // Marketplace layout: `.claude-plugin/marketplace.json` at root +
+  // `plugins/<name>/.claude-plugin/plugin.json` for each plugin. Check this
+  // first because the marketplace.json prefix would otherwise match the
+  // standard `.claude-plugin` branch below and load nothing.
+  if (paths.includes('.claude-plugin/marketplace.json')) {
+    const nested = paths
+      .filter(p => /^plugins\/[^/]+\/\.claude-plugin\/plugin\.json$/.test(p))
+      .sort();
+    if (nested.length > 0) {
+      return nested[0].replace(/\/\.claude-plugin\/plugin\.json$/, '');
+    }
+  }
   if (paths.some(p => p === '.claude-plugin/plugin.json' || p.startsWith('.claude-plugin/'))) {
     return '.claude-plugin';
   }
