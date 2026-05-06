@@ -12,6 +12,16 @@ export interface WorkflowStep {
   tokenEstimate: number;
   phase: 'setup' | 'trigger' | 'execute' | 'entry';
   isGlobal?: boolean; // true for unconnected rules/hooks (shared across all commands)
+  /** True when this step is a markdown section sliced out of the parent command's
+   * prompt (not an independent node). All phase steps share their parent
+   * command's nodeId, so the property panel shows the same prompt for all. */
+  isPhase?: boolean;
+  /** The full heading text (without the leading `## `), used to scroll the
+   * Prompt Template editor to the right section when the user clicks. */
+  phaseHeading?: string;
+  /** Display label of the parent command, e.g. `/dpa-roundup`. Used in the
+   * "section of /cmd" hint on phase-step cards. */
+  parentCommandName?: string;
 }
 
 function estimateTokens(text: string): number {
@@ -221,6 +231,9 @@ export function deriveWorkflow(
           description: firstLine.substring(0, 100),
           tokenEstimate: estimateTokens(sectionContent),
           phase: 'execute',
+          isPhase: true,
+          phaseHeading: phaseName,
+          parentCommandName: `/${cd.name || 'untitled'}`,
         });
       }
     }

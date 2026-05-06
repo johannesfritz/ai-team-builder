@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -14,20 +14,51 @@ interface FullscreenEditorProps {
   typeColor?: string;
   placeholder?: string;
   help?: string;
+  /** When set on open, scroll the textarea to the line containing
+   * `## <scrollToHeading>` and select that heading line. */
+  scrollToHeading?: string | null;
 }
 
 export function FullscreenEditor({
-  open, onClose, value, onChange, title, typeBadge, typeColor, placeholder, help,
+  open, onClose, value, onChange, title, typeBadge, typeColor, placeholder, help, scrollToHeading,
 }: FullscreenEditorProps) {
   const [localValue, setLocalValue] = useState(value);
   const [wordCount, setWordCount] = useState(0);
   const [lineCount, setLineCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [tokenEstimate, setTokenEstimate] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setLocalValue(value);
   }, [value, open]);
+
+  // After the editor mounts (or scrollToHeading changes while open), scroll
+  // the textarea so the requested `## heading` line is visible and selected.
+  useEffect(() => {
+    if (!open || !scrollToHeading) return;
+    const ta = textareaRef.current;
+    if (!ta) return;
+    // Defer one frame so the textarea has its final size before we measure.
+    const id = requestAnimationFrame(() => {
+      const text = ta.value;
+      // Match the heading at start of line, tolerant to trailing whitespace.
+      const escaped = scrollToHeading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`^##\\s+${escaped}\\s*$`, 'm');
+      const m = text.match(re);
+      if (!m || m.index === undefined) return;
+      const start = m.index;
+      const end = start + m[0].length;
+      ta.focus();
+      ta.setSelectionRange(start, end);
+      // Compute scrollTop manually — setSelectionRange doesn't always scroll
+      // a fresh-mounted textarea reliably across browsers.
+      const lineHeight = parseFloat(getComputedStyle(ta).lineHeight) || 20;
+      const linesBefore = text.slice(0, start).split('\n').length - 1;
+      ta.scrollTop = Math.max(0, linesBefore * lineHeight - ta.clientHeight / 4);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [open, scrollToHeading, localValue]);
 
   useEffect(() => {
     const text = localValue || '';
@@ -94,6 +125,7 @@ export function FullscreenEditor({
       {/* Editor */}
       <div className="flex-1 overflow-hidden p-6">
         <textarea
+          ref={textareaRef}
           value={localValue}
           onChange={e => setLocalValue(e.target.value)}
           onKeyDown={handleKeyDown}

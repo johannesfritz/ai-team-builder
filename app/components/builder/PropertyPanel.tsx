@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useBuilderStore } from '@/stores/builder-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,11 +64,11 @@ export function PropertyPanel() {
         </GuidedField>
 
         {/* Type-specific fields */}
-        {type === 'rule' && <RuleFields data={data} update={update} type={type} />}
+        {type === 'rule' && <RuleFields data={data} update={update} type={type} nodeId={node.id} />}
         {type === 'hook' && <HookFields data={data} update={update} type={type} />}
-        {type === 'skill' && <SkillFields data={data} update={update} type={type} />}
-        {type === 'command' && <CommandFields data={data} update={update} type={type} />}
-        {type === 'agent' && <AgentFields data={data} update={update} type={type} />}
+        {type === 'skill' && <SkillFields data={data} update={update} type={type} nodeId={node.id} />}
+        {type === 'command' && <CommandFields data={data} update={update} type={type} nodeId={node.id} />}
+        {type === 'agent' && <AgentFields data={data} update={update} type={type} nodeId={node.id} />}
         {type === 'mcp' && <McpFields data={data} update={update} type={type} />}
 
         <ConnectionsSection nodeId={node.id} nodeType={type} nodes={nodes} edges={edges} />
@@ -112,13 +112,27 @@ function GuidedField({ fieldKey, label, type, data, children }: {
   );
 }
 
-function ExpandableText({ value, onChange, fieldKey, label, typeBadge, typeColor, placeholder, help }: {
+function ExpandableText({ value, onChange, fieldKey, label, typeBadge, typeColor, placeholder, help, nodeId }: {
   value: string; onChange: (v: string) => void; fieldKey: string;
   label: string; typeBadge?: string; typeColor?: string; placeholder?: string; help?: string;
+  nodeId?: string;
 }) {
   const [editorOpen, setEditorOpen] = useState(false);
+  const [scrollHeading, setScrollHeading] = useState<string | null>(null);
+  const scrollSignal = useBuilderStore(s => s.scrollToPhase);
+  const clearScrollToPhase = useBuilderStore(s => s.clearScrollToPhase);
   const preview = value ? value.substring(0, 120).replace(/\n/g, ' ') + (value.length > 120 ? '...' : '') : '';
   const lines = value ? value.split('\n').length : 0;
+
+  // When the WorkflowView fires a phase-click that targets this field on the
+  // selected node, open the editor and pass the heading down for scroll.
+  useEffect(() => {
+    if (!scrollSignal || !nodeId) return;
+    if (scrollSignal.nodeId !== nodeId || scrollSignal.field !== fieldKey) return;
+    setScrollHeading(scrollSignal.heading);
+    setEditorOpen(true);
+    clearScrollToPhase();
+  }, [scrollSignal, nodeId, fieldKey, clearScrollToPhase]);
 
   return (
     <>
@@ -140,7 +154,7 @@ function ExpandableText({ value, onChange, fieldKey, label, typeBadge, typeColor
       </div>
       <FullscreenEditor
         open={editorOpen}
-        onClose={() => setEditorOpen(false)}
+        onClose={() => { setEditorOpen(false); setScrollHeading(null); }}
         value={value}
         onChange={onChange}
         title={label}
@@ -148,12 +162,13 @@ function ExpandableText({ value, onChange, fieldKey, label, typeBadge, typeColor
         typeColor={typeColor}
         placeholder={placeholder}
         help={help}
+        scrollToHeading={scrollHeading}
       />
     </>
   );
 }
 
-function RuleFields({ data, update, type }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType }) {
+function RuleFields({ data, update, type, nodeId }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType; nodeId: string }) {
   return (
     <>
       <GuidedField fieldKey="name" label="Rule Name" type={type} data={data}>
@@ -170,6 +185,7 @@ function RuleFields({ data, update, type }: { data: Record<string, unknown>; upd
           typeBadge="Rule" typeColor={NODE_COLORS.rule}
           placeholder="# Rule content..."
           help={GUIDANCE.rule.fields.content?.help}
+          nodeId={nodeId}
         />
       </GuidedField>
     </>
@@ -210,7 +226,7 @@ function HookFields({ data, update, type }: { data: Record<string, unknown>; upd
   );
 }
 
-function SkillFields({ data, update, type }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType }) {
+function SkillFields({ data, update, type, nodeId }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType; nodeId: string }) {
   return (
     <>
       <GuidedField fieldKey="name" label="Skill Name" type={type} data={data}>
@@ -233,13 +249,14 @@ function SkillFields({ data, update, type }: { data: Record<string, unknown>; up
           typeBadge="Skill" typeColor={NODE_COLORS.skill}
           placeholder="Step-by-step procedure for Claude to follow..."
           help={GUIDANCE.skill.fields.instructions?.help}
+          nodeId={nodeId}
         />
       </GuidedField>
     </>
   );
 }
 
-function CommandFields({ data, update, type }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType }) {
+function CommandFields({ data, update, type, nodeId }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType; nodeId: string }) {
   return (
     <>
       <GuidedField fieldKey="name" label="Command Name" type={type} data={data}>
@@ -256,13 +273,14 @@ function CommandFields({ data, update, type }: { data: Record<string, unknown>; 
           typeBadge="Command" typeColor={NODE_COLORS.command}
           placeholder="Instructions Claude follows when user types /your-command..."
           help={GUIDANCE.command.fields.prompt?.help}
+          nodeId={nodeId}
         />
       </GuidedField>
     </>
   );
 }
 
-function AgentFields({ data, update, type }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType }) {
+function AgentFields({ data, update, type, nodeId }: { data: Record<string, unknown>; update: (f: string, v: unknown) => void; type: PluginNodeType; nodeId: string }) {
   return (
     <>
       <GuidedField fieldKey="name" label="Agent Name" type={type} data={data}>
@@ -287,6 +305,7 @@ function AgentFields({ data, update, type }: { data: Record<string, unknown>; up
           typeBadge="Agent" typeColor={NODE_COLORS.agent}
           placeholder="Describe this agent's role, constraints, and approach..."
           help={GUIDANCE.agent.fields.systemPrompt?.help}
+          nodeId={nodeId}
         />
       </GuidedField>
       <GuidedField fieldKey="allowedTools" label="Allowed Tools" type={type} data={data}>

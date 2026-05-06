@@ -25,49 +25,71 @@ export function WorkflowStepCard({ step, index, isLast, isSelected, onClick, dra
 
   return (
     <div className="relative">
-      {/* Connector line */}
-      {!isLast && (
+      {/* Connector line — only between real graph steps (not phase slices) */}
+      {!isLast && !step.isPhase && (
         <div className="absolute left-5 top-[56px] w-px h-6 bg-zinc-700" />
       )}
 
       <div
-        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-          isSelected
+        className={`flex items-start gap-3 ${step.isPhase ? 'py-2 pl-8 pr-3 ml-4 border-l-2 border-l-zinc-800' : 'p-3'} rounded-lg ${step.isPhase ? '' : 'border'} cursor-pointer transition-colors ${
+          isSelected && !step.isPhase
             ? 'bg-zinc-800 border-zinc-600'
+            : step.isPhase
+            ? 'bg-transparent hover:bg-zinc-900/40 text-zinc-500'
             : step.isGlobal
             ? 'bg-zinc-950 border-zinc-800/50 hover:border-zinc-700 opacity-60'
             : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
         }`}
         onClick={onClick}
+        title={step.isPhase ? `Section of ${step.parentCommandName ?? 'this command'} — clicking opens the editor at this heading` : undefined}
       >
-        {/* Drag handle + step number */}
-        <div className="flex flex-col items-center shrink-0 pt-0.5" {...dragHandleProps}>
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2"
-            style={{ borderColor: NODE_COLORS[step.nodeType], color: NODE_COLORS[step.nodeType] }}
-          >
-            {index + 1}
+        {/* Drag handle + step number (hidden for phase steps to make them feel sub-ordinate) */}
+        {!step.isPhase && (
+          <div className="flex flex-col items-center shrink-0 pt-0.5" {...dragHandleProps}>
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2"
+              style={{ borderColor: NODE_COLORS[step.nodeType], color: NODE_COLORS[step.nodeType] }}
+            >
+              {index + 1}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge
-              className="text-[9px] h-4 px-1.5"
-              style={{ background: NODE_COLORS[step.nodeType], color: '#fff' }}
-            >
-              {NODE_LABELS[step.nodeType]}
-            </Badge>
-            <span className="text-xs font-semibold text-zinc-200 truncate">{step.name}</span>
-          </div>
-          <div className="text-[11px] text-zinc-500 leading-relaxed">{step.description}</div>
-          <div className="flex items-center gap-3 mt-1.5">
-            <span className={`text-[10px] font-medium ${phaseInfo.color}`}>{phaseInfo.label}</span>
-            {step.tokenEstimate > 0 && (
-              <span className="text-[10px] text-zinc-600">~{step.tokenEstimate} tokens</span>
-            )}
-          </div>
+          {step.isPhase ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-zinc-600 font-mono">##</span>
+                <span className="text-xs text-zinc-300 truncate">{step.name}</span>
+                {step.tokenEstimate > 0 && (
+                  <span className="text-[10px] text-zinc-600">· ~{step.tokenEstimate} tokens</span>
+                )}
+              </div>
+              {step.description && (
+                <div className="text-[11px] text-zinc-600 leading-snug truncate mt-0.5">{step.description}</div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge
+                  className="text-[9px] h-4 px-1.5"
+                  style={{ background: NODE_COLORS[step.nodeType], color: '#fff' }}
+                >
+                  {NODE_LABELS[step.nodeType]}
+                </Badge>
+                <span className="text-xs font-semibold text-zinc-200 truncate">{step.name}</span>
+              </div>
+              <div className="text-[11px] text-zinc-500 leading-relaxed">{step.description}</div>
+              <div className="flex items-center gap-3 mt-1.5">
+                <span className={`text-[10px] font-medium ${phaseInfo.color}`}>{phaseInfo.label}</span>
+                {step.tokenEstimate > 0 && (
+                  <span className="text-[10px] text-zinc-600">~{step.tokenEstimate} tokens</span>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

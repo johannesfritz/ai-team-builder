@@ -57,6 +57,14 @@ interface BuilderState {
   connection: RepoConnection | null;
   setConnection: (c: RepoConnection | null) => void;
   updateConnectionSha: (sha: string) => void;
+
+  /** One-shot signal: when set, the matching ExpandableText opens its
+   * fullscreen editor and scrolls the textarea to the named heading. The
+   * timestamp is bumped on every set so re-clicking the same phase re-fires.
+   * Consumers should call clearScrollToPhase() after handling. */
+  scrollToPhase: { nodeId: string; field: string; heading: string; ts: number } | null;
+  setScrollToPhase: (nodeId: string, field: string, heading: string) => void;
+  clearScrollToPhase: () => void;
 }
 
 const NODE_DEFAULTS: Record<PluginNodeType, Record<string, unknown>> = {
@@ -187,6 +195,11 @@ export const useBuilderStore = create<BuilderState>()(persist((set, get) => ({
     if (!current) return;
     set({ connection: { ...current, lastFetchedSha: sha, loadedAt: Date.now() } });
   },
+
+  scrollToPhase: null,
+  setScrollToPhase: (nodeId, field, heading) =>
+    set({ scrollToPhase: { nodeId, field, heading, ts: Date.now() } }),
+  clearScrollToPhase: () => set({ scrollToPhase: null }),
 }),
   {
     name: 'ai-team-builder',

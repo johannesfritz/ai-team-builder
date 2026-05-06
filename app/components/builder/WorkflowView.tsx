@@ -10,7 +10,7 @@ import { WorkflowStepCard } from './WorkflowStep';
 import { WorkflowCommandSelector } from './WorkflowCommandSelector';
 
 export function WorkflowView() {
-  const { nodes, edges, selectedNodeId, setSelectedNodeId, addNode, updateNodeData } = useBuilderStore();
+  const { nodes, edges, selectedNodeId, setSelectedNodeId, addNode, updateNodeData, setScrollToPhase } = useBuilderStore();
   const [selectedCommandId, setSelectedCommandId] = useState<string | null>(null);
 
   // Auto-select first command if none selected
@@ -57,16 +57,33 @@ export function WorkflowView() {
         <>
           {/* Phase groups */}
           <div key={selectedCommandId} className="space-y-2 mb-6">
-            {steps.map((step, index) => (
-              <WorkflowStepCard
-                key={`${selectedCommandId}-${index}`}
-                step={step}
-                index={index}
-                isLast={index === steps.length - 1}
-                isSelected={step.nodeId === selectedNodeId}
-                onClick={() => setSelectedNodeId(step.nodeId)}
-              />
-            ))}
+            {steps.map((step, index) => {
+              const prev = steps[index - 1];
+              const isFirstPhase = step.isPhase && (!prev || !prev.isPhase);
+              return (
+                <div key={`${selectedCommandId}-${index}`}>
+                  {isFirstPhase && (
+                    <div className="flex items-center gap-2 ml-4 mt-3 mb-1.5 text-[10px] uppercase tracking-wider text-zinc-600">
+                      <span>Sections of {step.parentCommandName ?? 'this command'}'s prompt</span>
+                      <span className="text-zinc-700">·</span>
+                      <span className="text-zinc-700 normal-case tracking-normal">click to jump to that heading in the editor</span>
+                    </div>
+                  )}
+                  <WorkflowStepCard
+                    step={step}
+                    index={index}
+                    isLast={index === steps.length - 1}
+                    isSelected={step.nodeId === selectedNodeId}
+                    onClick={() => {
+                      setSelectedNodeId(step.nodeId);
+                      if (step.isPhase && step.phaseHeading) {
+                        setScrollToPhase(step.nodeId, 'prompt', step.phaseHeading);
+                      }
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <Separator className="bg-zinc-800 my-4" />
