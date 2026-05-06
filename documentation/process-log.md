@@ -495,3 +495,9 @@ User shared full token to drive Journey D headless. Token verified via `GET /use
 - **Outcome:** Live on https://jfritz.xyz/ai-team-builder/. Verified marketplace detection in deployed bundle. Multi-plugin marketplaces pick alphabetically-first plugin (chooser UI is a follow-up).
 - **Files touched:** `app/lib/gitsync/save.ts`, `app/lib/gitsync/__tests__/save.test.ts`. Commit: b73b1fe.
 - **Follow-up:** None — user to verify by reconnecting to the DPA team plugin.
+
+### 2026-05-06 — Workflow phase-step distinction + scroll-to-heading (JCC-762)
+- **What:** Workflow view's "steps" extracted from `## headings` in a command's prompt all shared the parent command's nodeId, making every click open the same property panel — confusing. Phase steps now render visually subordinate (small card, `##` prefix, dimmed) under a "Sections of /cmd's prompt" header, and clicking one opens the FullscreenEditor for the prompt and scrolls/selects the matching `## heading` line via a one-shot zustand signal (`scrollToPhase`).
+- **Outcome:** Live on jfritz.xyz. Verified end-to-end with headed browser: clicking Pipeline highlights `## Pipeline`, clicking Output highlights `## Output`. Real graph-node steps keep the original styling.
+- **Files touched:** `lib/workflow/derive.ts`, `components/builder/{WorkflowView,WorkflowStep,PropertyPanel,FullscreenEditor}.tsx`, `stores/builder-store.ts`. Commit: d09c6ac.
+- **Follow-up:** None.
