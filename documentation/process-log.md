@@ -501,3 +501,9 @@ User shared full token to drive Journey D headless. Token verified via `GET /use
 - **Outcome:** Live on jfritz.xyz. Verified end-to-end with headed browser: clicking Pipeline highlights `## Pipeline`, clicking Output highlights `## Output`. Real graph-node steps keep the original styling.
 - **Files touched:** `lib/workflow/derive.ts`, `components/builder/{WorkflowView,WorkflowStep,PropertyPanel,FullscreenEditor}.tsx`, `stores/builder-store.ts`. Commit: d09c6ac.
 - **Follow-up:** None.
+
+### 2026-10-08: Model aliases move to the 5.5 models
+- **What:** Johannes ordered on 8 October 2026 that Haiku, Sonnet and Opus run only at 5.5. `MODEL_ALIASES` now resolves `haiku`, `sonnet`, `opus` and `inherit` to `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5` and `claude-sonnet-5-5` (previously the 4.5 ids). The price table gains the three 5.5 ids at Anthropic's list prices, checked on platform.claude.com on 8 October 2026: Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50 per MTok, rising to $0.50/$2.50 for a prompt above 100,000 input tokens. `computeCost` applies that higher Haiku tier. The alias price rows now equal the model each alias resolves to.
+- **Outcome:** `npx vitest run` 175 passed; `npx tsc --noEmit` and eslint clean. Not deployed: the live site keeps the 4.5 ids until the next deploy.
+- **Files touched:** `app/lib/anthropic/pricing.ts`, `app/lib/anthropic/__tests__/pricing.test.ts`.
+- **Follow-up:** Deploy to jfritz.xyz. The old 4.x price rows were not re-checked and look stale (the pricing page lists Opus 4.6 and 4.7 at $5/$25 and Haiku 4.5 at $1/$5); `PRICING_VERIFIED_AT` is left at 2026-04-22 for that reason.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PRICING_USD_PER_MTOK, PRICING_VERIFIED_AT, computeCost, formatCost } from '../pricing';
+import { MODEL_ALIASES, PRICING_USD_PER_MTOK, PRICING_VERIFIED_AT, computeCost, formatCost, resolveModel } from '../pricing';
 import { TEMPLATES } from '../../templates';
 
 describe('PRICING_USD_PER_MTOK', () => {
@@ -28,15 +28,31 @@ describe('computeCost', () => {
   });
 
   it('computes sonnet cost correctly', () => {
-    // 1000 input + 1000 output on sonnet ($3/$15 per MTok)
-    // = 1000/1e6 * 3 + 1000/1e6 * 15 = 0.003 + 0.015 = 0.018
-    expect(computeCost({ model: 'sonnet', inputTokens: 1000, outputTokens: 1000 })).toBeCloseTo(0.018, 5);
+    // 1000 input + 1000 output on sonnet = Claude Sonnet 5.5 ($2/$10 per MTok)
+    // = 1000/1e6 * 2 + 1000/1e6 * 10 = 0.002 + 0.010 = 0.012
+    expect(computeCost({ model: 'sonnet', inputTokens: 1000, outputTokens: 1000 })).toBeCloseTo(0.012, 5);
   });
 
   it('computes haiku cost correctly', () => {
-    // 1000 input + 1000 output on haiku ($0.80/$4 per MTok)
-    // = 0.0008 + 0.004 = 0.0048
-    expect(computeCost({ model: 'haiku', inputTokens: 1000, outputTokens: 1000 })).toBeCloseTo(0.0048, 5);
+    // 1000 input + 1000 output on haiku = Claude Haiku 5.5 ($0.10/$0.50 per MTok)
+    // = 0.0001 + 0.0005 = 0.0006
+    expect(computeCost({ model: 'haiku', inputTokens: 1000, outputTokens: 1000 })).toBeCloseTo(0.0006, 6);
+  });
+
+  it('charges Claude Haiku 5.5 its higher rates above 100,000 input tokens', () => {
+    // 200,000 input + 1000 output at $0.50/$2.50 per MTok = 0.1 + 0.0025 = 0.1025
+    expect(computeCost({ model: 'claude-haiku-5-5', inputTokens: 200_000, outputTokens: 1000 })).toBeCloseTo(0.1025, 6);
+    // 100,000 input is still the lower tier: 0.01 + 0.0005 = 0.0105
+    expect(computeCost({ model: 'claude-haiku-5-5', inputTokens: 100_000, outputTokens: 1000 })).toBeCloseTo(0.0105, 6);
+  });
+});
+
+describe('MODEL_ALIASES', () => {
+  it('resolves every alias to a 5.5 model that has a price', () => {
+    for (const [alias, id] of Object.entries(MODEL_ALIASES)) {
+      expect(id, `alias '${alias}'`).toMatch(/^claude-(opus|sonnet|haiku)-5-5$/);
+      expect(PRICING_USD_PER_MTOK[resolveModel(alias)]).toBeDefined();
+    }
   });
 });
 
