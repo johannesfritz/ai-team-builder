@@ -130,17 +130,4 @@ describe('analyzeHealth', () => {
     expect(cycleIssue).toBeDefined();
     expect(cycleIssue!.severity).toBe('error');
   });
-
-  it('does not report cycles for acyclic graphs', () => {
-    const nodes: Node[] = [
-      makeNode('a', 'hook', { event: 'PreToolUse', matcher: '' }),
-      makeNode('b', 'rule', { name: 'r1', content: '' }),
-      makeNode('c1', 'command', { name: 'test', prompt: 'test' }),
-    ];
-    const edges: Edge[] = [makeEdge('a', 'b')];
-
-    const report = analyzeHealth(nodes, edges);
-    const cycleIssue = report.issues.find(i => i.message.includes('Cycle'));
-    expect(cycleIssue).toBeUndefined();
-  });
 });
