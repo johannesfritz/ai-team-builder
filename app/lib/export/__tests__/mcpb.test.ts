@@ -10,6 +10,12 @@ describe('generateMcpbBundle', () => {
     { path: 'commands/review.md', content: 'Review the code.' },
   ];
 
+  it('generates a non-empty buffer', async () => {
+    const buf = await generateMcpbBuffer(sampleFiles, 'test-plugin', '1.0.0', 'A test plugin');
+    expect(buf).toBeInstanceOf(Uint8Array);
+    expect(buf.length).toBeGreaterThan(0);
+  });
+
   it('includes all files plus manifest', async () => {
     const buf = await generateMcpbBuffer(sampleFiles, 'test-plugin');
     const zip = await JSZip.loadAsync(buf);

@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { MODEL_ALIASES, PRICING_USD_PER_MTOK, computeCost, formatCost, resolveModel } from '../pricing';
+import { MODEL_ALIASES, PRICING_USD_PER_MTOK, PRICING_VERIFIED_AT, computeCost, formatCost, resolveModel } from '../pricing';
 import { TEMPLATES } from '../../templates';
 
 describe('PRICING_USD_PER_MTOK', () => {
+  it('has a verification date set', () => {
+    expect(PRICING_VERIFIED_AT).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
   it('covers every model referenced by any template agent', () => {
     for (const template of TEMPLATES) {
       for (const nodeDef of template.nodes) {
