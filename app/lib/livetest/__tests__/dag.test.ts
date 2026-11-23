@@ -39,11 +39,6 @@ describe('transitiveDescendants', () => {
     const edges = [edge('e1', 'a', 'b'), edge('e2', 'b', 'a')];
     expect([...transitiveDescendants('a', edges)]).toEqual(['b']);
   });
-
-  it('excludes the start node itself', () => {
-    const edges = [edge('e1', 'a', 'b'), edge('e2', 'b', 'a')];
-    expect(transitiveDescendants('a', edges).has('a')).toBe(false);
-  });
 });
 
 describe('transitiveAncestors', () => {
